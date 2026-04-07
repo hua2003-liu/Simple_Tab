@@ -1,0 +1,8 @@
+{
+  "name": "tab-wallpaper-tools",
+  "private": true,
+  "scripts": {
+    "sync:wallpapers": "node scripts/sync-wallpapers.mjs",
+    "watch:wallpapers": "node scripts/sync-wallpapers.mjs --watch"
+  }
+}
