@@ -4,7 +4,7 @@ import process from "node:process";
 
 const rootDir = process.cwd();
 const wallpapersDir = path.join(rootDir, "wallpapers");
-const jsonConfigFile = path.join(rootDir, "wallpapers.json");
+const jsonConfigFile = path.join(rootDir, "js", "config", "wallpapers.json");
 const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
 const isWatchMode = process.argv.includes("--watch");
 

@@ -1,5 +1,3 @@
-import wallpapers from "./wallpapers.json" assert { type: "json" };
-
 export const defaultBookmarks = [
   { title: "Grok", url: "https://grok.com", icon: "https://www.google.com/s2/favicons?domain=grok.com&sz=128" },
   { title: "ChatGPT", url: "https://chatgpt.com", icon: "https://www.google.com/s2/favicons?domain=chatgpt.com&sz=128" },
