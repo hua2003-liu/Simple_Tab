@@ -19,9 +19,8 @@
 
 ### Screenshots
 
-| Light Theme | Dark Theme |
-|-------------|------------|
-| ![Light](./screenshots/light.png) | ![Dark](./screenshots/dark.png) |
+![Simple Tab](./screenshots/1.png)
+![Simple Tab](./screenshots/2.png)
 
 ### Installation
 
