@@ -21,11 +21,14 @@ export const SEARCH_ENGINES = {
   }
 };
 
+export const BOOKMARKS_VERSION = 1;
+
 export const STORAGE_KEYS = {
   bookmarks: "bookmarks",
   searchEngine: "search_engine",
   searchHistory: "search_history",
-  displayName: "display_name"
+  displayName: "display_name",
+  bookmarksVersion: "bookmarks_version"
 };
 
 export const NAVIGATION_DELAY_MS = 400;
