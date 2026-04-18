@@ -1,4 +1,4 @@
-import { defaultBookmarks, SEARCH_ENGINES, STORAGE_KEYS } from "../config/constants.js";
+import { STORAGE_KEYS, defaultBookmarks, SEARCH_ENGINES } from "../config/constants.js";
 
 const storage = chrome.storage.local;
 

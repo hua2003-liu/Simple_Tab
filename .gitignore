@@ -18,5 +18,4 @@ dist/
 .DS_Store
 Thumbs.db
 
-# 壁纸资源
-wallpapers/
+.claude

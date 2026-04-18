@@ -11,6 +11,7 @@ export function createSearchHistoryController({
 
   let items = [];
   let activeIndex = -1;
+  let originalText = "";
 
   const syncActiveState = () => {
     syncActiveHistoryItem({
@@ -34,12 +35,14 @@ export function createSearchHistoryController({
 
   return {
     setItems,
+    setActiveIndex,
 
     getItems() {
       return items;
     },
 
     show() {
+      originalText = searchInput?.value || "";
       setHistoryVisibility(historyContainer, true);
     },
 
@@ -47,6 +50,11 @@ export function createSearchHistoryController({
       activeIndex = -1;
       syncActiveState();
       setHistoryVisibility(historyContainer, false);
+    },
+
+    restoreOriginal() {
+      if (searchInput) searchInput.value = originalText;
+      this.hide();
     },
 
     isVisible() {
@@ -71,8 +79,14 @@ export function createSearchHistoryController({
         return;
       }
 
-      const nextIndex = activeIndex > 0 ? activeIndex - 1 : items.length - 1;
-      setActiveIndex(nextIndex);
+      if (activeIndex <= 0) {
+        activeIndex = -1;
+        if (searchInput) searchInput.value = originalText;
+        syncActiveState();
+        return;
+      }
+
+      setActiveIndex(activeIndex - 1);
     },
 
     getSelectedItem() {

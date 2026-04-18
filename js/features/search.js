@@ -37,7 +37,7 @@ export async function initSearch({
         if (searchInput) {
           searchInput.value = item;
         }
-        await performSearch(item);
+        await performSearch(searchInput?.value || "");
       },
       onDelete: async (item) => {
         await deleteHistory(item);
@@ -86,6 +86,10 @@ export async function initSearch({
     }
   });
 
+  searchInput?.addEventListener("input", () => {
+    searchHistoryController.setActiveIndex(-1);
+  });
+
   searchInput?.addEventListener("blur", () => {
     setTimeout(() => {
       searchHistoryController.hide();
@@ -96,7 +100,7 @@ export async function initSearch({
     const historyVisible = searchHistoryController.isVisible();
 
     if (event.key === "Escape") {
-      searchHistoryController.hide();
+      searchHistoryController.restoreOriginal();
       return;
     }
 
@@ -131,7 +135,9 @@ export async function initSearch({
     const selectedItem = searchHistoryController.getSelectedItem();
     if (event.key === "Enter" && historyVisible && selectedItem) {
       event.preventDefault();
-      await performSearch(selectedItem);
+      const inputValue = searchInput?.value || "";
+      await performSearch(inputValue);
+      return;
     }
   });
 }

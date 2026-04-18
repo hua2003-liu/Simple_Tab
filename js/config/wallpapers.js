@@ -2,7 +2,7 @@ let wallpapers = [];
 
 export async function loadWallpapers() {
   if (wallpapers.length > 0) return wallpapers;
-  const response = await fetch('./wallpapers.json');
+  const response = await fetch('./js/config/wallpapers.json');
   wallpapers = await response.json();
   return wallpapers;
 }
