@@ -62,41 +62,44 @@ async function bootstrap() {
 
   await ensureInitialData();
   themeController.applyTheme();
-  await initProfile({
-    displayNameInput: elements.displayNameInput,
-    storageApi,
-    onDisplayNameChange: (displayName) => {
-      themeController.updateDisplayName(displayName);
-    }
-  });
-  await initSearch({
-    elements,
-    storageApi,
-    navigationApi,
-    searchUi,
-    searchHistoryStore,
-    searchHistoryController,
-    constants: {
-      maxHistoryItems: MAX_HISTORY_ITEMS,
-      navigationDelayMs: NAVIGATION_DELAY_MS
-    }
-  });
-  await initBookmarks({
-    elements,
-    storageApi,
-    navigationApi,
-    delayMs: NAVIGATION_DELAY_MS
-  });
-  await initSettings({
-    elements,
-    storageApi,
-    settingsUi,
-    themeController,
-    searchPresentationUpdater: updateSearchPresentation
-  });
+  await Promise.all([
+    initProfile({
+      displayNameInput: elements.displayNameInput,
+      storageApi,
+      onDisplayNameChange: (displayName) => {
+        themeController.updateDisplayName(displayName);
+      }
+    }),
+    initSearch({
+      elements,
+      storageApi,
+      navigationApi,
+      searchUi,
+      searchHistoryStore,
+      searchHistoryController,
+      constants: {
+        maxHistoryItems: MAX_HISTORY_ITEMS,
+        navigationDelayMs: NAVIGATION_DELAY_MS
+      }
+    }),
+    initBookmarks({
+      elements,
+      storageApi,
+      navigationApi,
+      delayMs: NAVIGATION_DELAY_MS
+    }),
+    initSettings({
+      elements,
+      storageApi,
+      settingsUi,
+      themeController,
+      searchPresentationUpdater: updateSearchPresentation
+    })
+  ]);
 
   document.body.classList.remove("app-loading");
-  animateBookmarkEnter(Array.from(elements.bookmarkContainer?.querySelectorAll(".bookmark-item") || []));
+  const activeBookmarkPage = elements.bookmarkContainer?.querySelector(".bookmark-page:not([hidden])");
+  animateBookmarkEnter(Array.from(activeBookmarkPage?.querySelectorAll(".bookmark-item") || []));
   animatePageEnter({
     greeting: elements.greeting,
     searchModule: elements.searchInput?.closest(".search-module"),

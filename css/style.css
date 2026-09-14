@@ -731,9 +731,22 @@ body::after {
 }
 
 .bookmark-list {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 102px;
+}
+
+.bookmark-page {
   display: flex;
   justify-content: center;
   gap: 16px;
+  width: 100%;
+  min-height: 102px;
+}
+
+.bookmark-page[hidden] {
+  display: none;
 }
 
 .bookmark-nav-btn {
@@ -899,7 +912,7 @@ body::after {
     letter-spacing: 0.08em;
   }
 
-  .bookmark-list {
+  .bookmark-page {
     gap: 12px;
   }
 
