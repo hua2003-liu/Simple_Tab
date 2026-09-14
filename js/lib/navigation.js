@@ -1,9 +1,5 @@
-export function navigateWithTransition({ mainContainer, url, delayMs }) {
-  if (mainContainer) {
-    mainContainer.classList.add("leave");
-  }
+import { animatePageLeave } from "./animations.js";
 
-  setTimeout(() => {
-    window.location.href = url;
-  }, delayMs);
+export function navigateWithTransition({ mainContainer, url, delayMs }) {
+  animatePageLeave(mainContainer, url, delayMs);
 }

@@ -1,3 +1,5 @@
+import { animateGreeting } from "../lib/animations.js";
+
 export function getTimeTheme(date = new Date()) {
   const hour = date.getHours();
 
@@ -19,6 +21,7 @@ export function getTimeTheme(date = new Date()) {
 export function createThemeController({ greetingElement }) {
   let activeThemePreview = "auto";
   let displayName = "";
+  let hasRenderedGreeting = false;
 
   const getThemeName = (date = new Date()) => {
     return activeThemePreview === "auto" ? getTimeTheme(date) : activeThemePreview;
@@ -58,7 +61,8 @@ export function createThemeController({ greetingElement }) {
       greeting = `${greeting}, ${displayName}`;
     }
 
-    greetingElement.textContent = greeting;
+    animateGreeting(greetingElement, greeting, { immediate: !hasRenderedGreeting });
+    hasRenderedGreeting = true;
   };
 
   return {

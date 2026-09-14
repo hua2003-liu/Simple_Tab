@@ -1,4 +1,5 @@
 import { SEARCH_ENGINES, STORAGE_KEYS } from "../config/constants.js";
+import { animateSearchFocus, animateSearchSubmit } from "../lib/animations.js";
 
 export async function initSearch({
   elements,
@@ -55,6 +56,7 @@ export async function initSearch({
   };
 
   const performSearch = async (keyword) => {
+    animateSearchSubmit(elements.searchButton, searchForm);
     const normalizedKeyword = await searchHistoryStore.save(keyword);
 
     if (!normalizedKeyword) {
@@ -80,6 +82,7 @@ export async function initSearch({
   });
 
   searchInput?.addEventListener("focus", async () => {
+    animateSearchFocus(searchForm, true);
     const history = await searchHistoryStore.list();
     if (history.length > 0) {
       await renderHistory();
@@ -91,6 +94,7 @@ export async function initSearch({
   });
 
   searchInput?.addEventListener("blur", () => {
+    animateSearchFocus(searchForm, false);
     setTimeout(() => {
       searchHistoryController.hide();
     }, 200);

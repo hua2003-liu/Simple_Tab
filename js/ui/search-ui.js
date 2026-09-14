@@ -1,11 +1,18 @@
 import { SEARCH_ENGINES } from "../config/constants.js";
+import {
+  animateHistoryItemState,
+  animateHistoryVisibility,
+  animateSearchEngineTag
+} from "../lib/animations.js";
 
 export function updateSearchPresentation(searchEngineKey, elements) {
   const currentEngine = SEARCH_ENGINES[searchEngineKey] ? searchEngineKey : "bing";
   const engineLabel = SEARCH_ENGINES[currentEngine].label;
 
   if (elements.searchEngineTag) {
+    elements.searchEngineTag.hidden = false;
     elements.searchEngineTag.textContent = engineLabel;
+    animateSearchEngineTag(elements.searchEngineTag);
   }
 
   if (elements.searchInput) {
@@ -19,15 +26,11 @@ export function setHistoryVisibility(historyContainer, visible) {
   }
 
   if (!visible) {
-    historyContainer.classList.remove("open");
-    historyContainer.style.display = "none";
+    animateHistoryVisibility(historyContainer, false);
     return;
   }
 
-  historyContainer.style.display = "block";
-  requestAnimationFrame(() => {
-    historyContainer.classList.add("open");
-  });
+  animateHistoryVisibility(historyContainer, true);
 }
 
 export function renderHistoryList({
@@ -88,6 +91,7 @@ export function syncActiveHistoryItem({
     const isActive = nodeIndex === activeIndex;
     node.classList.toggle("active", isActive);
     node.setAttribute("aria-selected", isActive ? "true" : "false");
+    animateHistoryItemState(node, isActive);
   });
 
   if (activeIndex < 0 || !items[activeIndex]) {

@@ -1,8 +1,13 @@
 {
   "name": "tab-wallpaper-tools",
   "private": true,
+  "devDependencies": {
+    "gsap": "^3.13.0"
+  },
   "scripts": {
     "sync:wallpapers": "node scripts/sync-wallpapers.mjs",
-    "watch:wallpapers": "node scripts/sync-wallpapers.mjs --watch"
+    "watch:wallpapers": "node scripts/sync-wallpapers.mjs --watch",
+    "build:styles": "npx @tailwindcss/cli -i ./css/tailwind.css -o ./css/tailwind.generated.css --minify",
+    "watch:styles": "npx @tailwindcss/cli -i ./css/tailwind.css -o ./css/tailwind.generated.css --watch"
   }
 }

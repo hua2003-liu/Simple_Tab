@@ -4,6 +4,7 @@ export function getElements() {
     greeting: document.getElementById("greeting"),
     searchInput: document.getElementById("search-input"),
     searchForm: document.getElementById("search-form"),
+    searchButton: document.getElementById("search-btn"),
     historyContainer: document.getElementById("search-history"),
     searchEngineTag: document.getElementById("search-engine-tag"),
     bookmarkContainer: document.getElementById("bookmark-list"),

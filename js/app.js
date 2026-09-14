@@ -10,6 +10,7 @@ import { initWallpaper } from "./features/wallpaper.js";
 import { navigateWithTransition } from "./lib/navigation.js";
 import { ensureInitialData, storageGet, storageSet } from "./lib/storage.js";
 import { getElements } from "./ui/elements.js";
+import { animateBookmarkEnter, animatePageEnter } from "./lib/animations.js";
 import {
   renderHistoryList,
   setHistoryVisibility,
@@ -55,8 +56,11 @@ async function bootstrap() {
     greetingElement: elements.greeting
   });
 
+  const wallpaperPromise = initWallpaper().catch((error) => {
+    console.warn("Wallpaper loading failed; using the fallback background.", error);
+  });
+
   await ensureInitialData();
-  await initWallpaper();
   themeController.applyTheme();
   await initProfile({
     displayNameInput: elements.displayNameInput,
@@ -90,10 +94,23 @@ async function bootstrap() {
     themeController,
     searchPresentationUpdater: updateSearchPresentation
   });
+
+  document.body.classList.remove("app-loading");
+  animateBookmarkEnter(Array.from(elements.bookmarkContainer?.querySelectorAll(".bookmark-item") || []));
+  animatePageEnter({
+    greeting: elements.greeting,
+    searchModule: elements.searchInput?.closest(".search-module"),
+    // Bookmark items own their entrance timeline; do not animate the outer module.
+    bookmarkModule: null,
+    toolbar: document.querySelector(".toolbar")
+  });
+
+  void wallpaperPromise;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   void bootstrap().catch((error) => {
     console.error("App bootstrap failed.", error);
+    document.body.classList.remove("app-loading");
   });
 });

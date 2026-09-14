@@ -29,8 +29,6 @@
   --space-7: 40px;
   --content-width: 780px;
   --module-width: 580px;
-  --animate-duration: 0.72s;
-  --animate-delay-step: 0.14s;
   --overlay-top: rgba(7, 8, 11, 0);
   --overlay-mid: rgba(7, 8, 11, 0);
   --overlay-bottom: rgba(7, 8, 11, 0);
@@ -182,13 +180,142 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-color: #0b0d12;
   color: var(--text-primary);
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 40px 20px;
-  transition: background-image 0.5s ease-in-out;
   isolation: isolate;
+}
+
+.wallpaper-stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #0b0d12;
+  pointer-events: none;
+  z-index: -3;
+}
+
+.wallpaper-layer {
+  position: absolute;
+  inset: -2%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  will-change: opacity, transform;
+}
+
+.app-loading .greeting-module,
+.app-loading .search-module,
+.app-loading .toolbar {
+  visibility: hidden;
+}
+
+.bookmark-skeleton {
+  display: none;
+}
+
+.app-loading .bookmark-module {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: min(var(--module-width), calc(100vw - 40px));
+  margin: 0;
+  transform: translate(-50%, -50%);
+}
+
+.app-loading .bookmark-list {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 102px;
+}
+
+.app-loading .bookmark-skeleton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  height: 102px;
+  margin: 0 auto;
+  isolation: isolate;
+}
+
+.app-loading .bookmark-skeleton::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(310px, 84%);
+  height: 56px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) rotate(-7deg);
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.08), inset 0 0 18px rgba(255, 255, 255, 0.04);
+  animation: bookmarkOrbit 2.6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.app-loading .bookmark-skeleton::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 88px;
+  height: 20px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.16);
+  filter: blur(14px);
+  animation: bookmarkCorePulse 1.8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.bookmark-skeleton span {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.36);
+  box-shadow: 0 0 0 rgba(255, 255, 255, 0), 0 0 18px rgba(255, 255, 255, 0.08);
+  animation: bookmarkDotPulse 1.45s ease-in-out infinite;
+}
+
+.bookmark-skeleton span:nth-child(1) { animation-delay: -1.16s; }
+.bookmark-skeleton span:nth-child(2) { animation-delay: -0.87s; }
+.bookmark-skeleton span:nth-child(3) { animation-delay: -0.58s; }
+.bookmark-skeleton span:nth-child(4) { animation-delay: -0.29s; }
+.bookmark-skeleton span:nth-child(5) { animation-delay: 0s; }
+
+@keyframes bookmarkDotPulse {
+  0%, 100% { opacity: 0.28; transform: translateY(5px) scale(0.72); box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+  45% { opacity: 1; transform: translateY(-5px) scale(1.18); box-shadow: 0 0 18px rgba(255, 255, 255, 0.68); }
+  70% { opacity: 0.55; transform: translateY(0) scale(0.92); }
+}
+
+@keyframes bookmarkOrbit {
+  0%, 100% { opacity: 0.45; transform: translate(-50%, -50%) rotate(-7deg) scale(0.94); }
+  50% { opacity: 0.9; transform: translate(-50%, -50%) rotate(7deg) scale(1.04); }
+}
+
+@keyframes bookmarkCorePulse {
+  0%, 100% { opacity: 0.24; transform: translate(-50%, -50%) scale(0.82); }
+  50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.16); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bookmark-skeleton span,
+  .app-loading .bookmark-skeleton::before,
+  .app-loading .bookmark-skeleton::after {
+    animation: none;
+  }
 }
 
 body::before {
@@ -271,55 +398,6 @@ body::after {
   box-shadow: none;
 }
 
-.animate__animated {
-  animation-duration: var(--animate-duration);
-  animation-delay: var(--animate-delay, 0s);
-  animation-fill-mode: both;
-}
-
-.animate__animated.animate__delay-1 {
-  --animate-delay: var(--animate-delay-step);
-}
-
-.animate__animated.animate__fadeInDown {
-  animation-name: fadeInDown;
-}
-
-.animate__animated.animate__fadeInUp {
-  animation-name: fadeInUp;
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translate3d(0, -28px, 0);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 18px, 0);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-/* 离场动画类 */
-.main-container.leave {
-  opacity: 0;
-  transform: translateY(-22px) scale(0.985);
-  transition: opacity 0.34s ease, transform 0.34s ease;
-}
-
 /* 问候语模块 */
 .greeting-module {
   margin-bottom: 36px;
@@ -357,7 +435,7 @@ body::after {
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(20px) saturate(120%);
   -webkit-backdrop-filter: blur(20px) saturate(120%);
-  transition: transform 0.28s ease, background 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+  transition: background 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
 }
 
 #search-form:focus-within {
@@ -385,6 +463,8 @@ body::after {
 }
 
 .search-engine-tag {
+  position: relative;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -416,13 +496,12 @@ body::after {
   font-weight: 600;
   letter-spacing: 0;
   cursor: pointer;
-  transition: transform 0.22s ease, background 0.22s ease, border-color 0.22s ease;
+  transition: background 0.22s ease, border-color 0.22s ease;
 }
 
 #search-btn:hover {
   background: var(--button-hover-bg);
   border-color: var(--border-strong);
-  transform: translateY(-1px);
 }
 
 /* 搜索历史下拉框 */
@@ -446,12 +525,6 @@ body::after {
   opacity: 0;
   transform: translateY(-6px) scale(0.985);
   transform-origin: top center;
-  transition: opacity 0.18s ease, transform 0.18s ease;
-}
-
-.search-history.open {
-  opacity: 1;
-  transform: translateY(0) scale(1);
 }
 
 .settings-panel {
@@ -680,7 +753,6 @@ body::after {
 
 .bookmark-nav-btn:hover {
   color: var(--text-primary);
-  transform: scale(1.1);
 }
 
 .bookmark-item {
@@ -699,16 +771,16 @@ body::after {
   box-shadow: none;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  transition: transform 0.28s ease;
 }
 
-.bookmark-item.animate__animated {
-  --animate-duration: 0.52s;
-  --animate-delay: var(--bookmark-delay, 0s);
-}
-
-.bookmark-item:hover {
-  transform: translateY(-2px);
+.bookmark-motion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  transform-style: preserve-3d;
+  will-change: transform, opacity, filter;
 }
 
 .bookmark-icon-wrap {
@@ -750,15 +822,10 @@ body::after {
   position: relative;
   z-index: 1;
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.18));
-  transition: transform 0.28s ease, filter 0.28s ease;
+  transition: filter 0.28s ease;
 }
 
-.bookmark-item:hover img {
-  transform: translateY(-1px) scale(1.04);
-  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.2));
-}
-
-.bookmark-item span {
+.bookmark-label {
   font-size: 0.78rem;
   font-weight: 500;
   line-height: 1.2;
@@ -774,38 +841,9 @@ body::after {
   transition: color 0.24s ease, transform 0.24s ease;
 }
 
-.bookmark-item:hover span {
+.bookmark-item:hover .bookmark-label {
   color: rgba(255, 255, 255, 0.98);
   transform: translateY(1px);
-}
-
-/* 翻页动画 */
-@keyframes bookmarkEnterUp {
-  from { opacity: 0; transform: translateY(16px) scale(0.92); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes bookmarkExitLeft {
-  to { opacity: 0; transform: translateX(-24px) scale(0.92); }
-}
-
-@keyframes bookmarkExitRight {
-  to { opacity: 0; transform: translateX(24px) scale(0.92); }
-}
-
-.bookmark-page-enter {
-  animation: bookmarkEnterUp 0.36s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  animation-delay: var(--bookmark-delay, 0s);
-}
-
-.bookmark-page-exit-left {
-  animation: bookmarkExitLeft 0.26s cubic-bezier(0.4, 0, 1, 1) both;
-  animation-delay: var(--bookmark-delay, 0s);
-}
-
-.bookmark-page-exit-right {
-  animation: bookmarkExitRight 0.26s cubic-bezier(0.4, 0, 1, 1) both;
-  animation-delay: var(--bookmark-delay, 0s);
 }
 
 /* 滚动条美化 */
@@ -824,15 +862,6 @@ body::after {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.4);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate__animated,
-  .main-container.leave {
-    animation: none !important;
-    transition: none !important;
-    transform: none !important;
-  }
 }
 
 @media (max-width: 768px) {
@@ -877,5 +906,156 @@ body::after {
   .bookmark-item {
     width: 84px;
     min-height: 94px;
+  }
+}
+
+body {
+  perspective: 1200px;
+}
+
+.wallpaper-layer {
+  transform-origin: 50% 50%;
+  will-change: opacity, transform, clip-path;
+}
+
+
+.main-container,
+.greeting-module h1,
+.bookmark-item {
+  transform-style: preserve-3d;
+}
+
+.greeting-module h1 {
+  transform-origin: 50% 100%;
+  will-change: transform, opacity, filter;
+}
+
+#search-form {
+  --edge-opacity: 0.1;
+  position: relative;
+  isolation: isolate;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+#search-form::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(100deg, transparent 6%, rgba(255, 255, 255, var(--edge-opacity)) 48%, transparent 92%);
+  background-size: 220% 100%;
+  background-position: 50% 0;
+  opacity: var(--edge-opacity);
+  transition: opacity 0.3s ease;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+#search-form::after {
+  content: "";
+  position: absolute;
+  right: 58px;
+  bottom: -8px;
+  left: 84px;
+  height: 16px;
+  z-index: -2;
+  border-radius: 50%;
+  opacity: 0;
+  transform: scaleX(0.45);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.42), transparent 68%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+#search-form.is-focused {
+  --edge-opacity: 0.72;
+}
+
+#search-form.is-focused::after {
+  opacity: 0.55;
+  transform: scaleX(1);
+}
+
+#search-form.is-submitting::after {
+  opacity: 0.9;
+  transform: scaleX(1.15);
+}
+
+#search-form.is-focused #search-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+#search-btn {
+  position: relative;
+  z-index: 2;
+  will-change: transform;
+}
+
+#search-btn::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: inherit;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+#search-form.is-focused #search-btn::before {
+  opacity: 0.8;
+  transform: scale(1.2);
+}
+
+.bookmark-item {
+  position: relative;
+  will-change: transform, opacity, filter;
+  transition: color 0.24s ease;
+}
+
+.bookmark-item::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 2px;
+  bottom: 5px;
+  left: 50%;
+  border-radius: 99px;
+  transform: translateX(-50%) scaleX(0);
+  transform-origin: 50% 50%;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 0 13px rgba(255, 255, 255, 0.42);
+  transition: transform 0.34s cubic-bezier(0.2, 0.85, 0.2, 1);
+}
+
+.bookmark-item:hover::after,
+.bookmark-item:focus-visible::after {
+  transform: translateX(-50%) scaleX(1);
+}
+
+.bookmark-icon-wrap {
+  will-change: transform;
+}
+
+.bookmark-item:focus-visible {
+  outline: none;
+}
+
+.bookmark-item:focus-visible .bookmark-icon-wrap::before {
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #search-form::before,
+  #search-form::after,
+  .bookmark-item::after {
+    transition: none;
   }
 }
