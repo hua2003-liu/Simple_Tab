@@ -1,0 +1,21 @@
+# 构建/依赖
+node_modules/
+npm-debug.log*
+
+# Chrome 扩展
+*.crx
+*.pem
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+.claude
