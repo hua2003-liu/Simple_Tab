@@ -17,6 +17,7 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
-.wallpapers
+wallpapers
+js/config/wallpapers.json
 .claude
 .agents
