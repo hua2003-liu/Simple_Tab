@@ -34,13 +34,33 @@ export async function initWallpaper({ storageApi, pinButton } = {}) {
   await loadWallpapers();
 
   const storedData = storageApi
-    ? await storageApi.storageGet([STORAGE_KEYS.wallpaper])
+    ? await storageApi.storageGet([
+      STORAGE_KEYS.wallpaper,
+      STORAGE_KEYS.wallpaperMode,
+      STORAGE_KEYS.wallpaperIndex
+    ])
     : {};
   const storedWallpaper = storedData[STORAGE_KEYS.wallpaper];
+  const wallpaperMode = storedData[STORAGE_KEYS.wallpaperMode] === "sequential"
+    ? "sequential"
+    : "random";
   const hasPinnedWallpaper = typeof storedWallpaper === "string" && Boolean(storedWallpaper);
+  const list = getWallpapers();
+  const storedIndex = Number.isInteger(storedData[STORAGE_KEYS.wallpaperIndex])
+    ? storedData[STORAGE_KEYS.wallpaperIndex]
+    : 0;
+  const wallpaperIndex = list.length > 0 ? Math.abs(storedIndex) % list.length : 0;
   const initialWallpaper = hasPinnedWallpaper
     ? storedWallpaper
-    : getRandomLocalWallpaper();
+    : wallpaperMode === "sequential"
+      ? `wallpapers/${list[wallpaperIndex] || "cover.png"}`
+      : getRandomLocalWallpaper();
+
+  if (!hasPinnedWallpaper && wallpaperMode === "sequential") {
+    await storageApi?.storageSet({
+      [STORAGE_KEYS.wallpaperIndex]: list.length > 0 ? (wallpaperIndex + 1) % list.length : 0
+    });
+  }
 
   applyWallpaper(initialWallpaper);
   updatePinButton(pinButton, hasPinnedWallpaper);

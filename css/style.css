@@ -392,6 +392,7 @@ body::after {
 
 .toolbar-btn:focus-visible,
 .settings-close:focus-visible,
+.settings-action:focus-visible,
 .settings-select:focus-visible,
 .settings-input:focus-visible {
   outline: none;
@@ -660,6 +661,28 @@ body::after {
   border-color: rgba(255, 255, 255, 0.18);
   background: var(--settings-button-hover-bg);
   outline: none;
+}
+
+.settings-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--settings-button-bg);
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  text-decoration: none;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+
+.settings-action:hover {
+  border-color: var(--border-strong);
+  background: var(--settings-button-hover-bg);
+  transform: translateY(-1px);
 }
 
 .settings-select-menu {

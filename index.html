@@ -40,6 +40,27 @@
     </div>
 
     <div class="settings-section">
+      <label class="settings-field" for="wallpaper-mode-trigger">Wallpaper order</label>
+      <div class="settings-select-wrap">
+        <select id="wallpaper-mode-select" class="settings-select-native" tabindex="-1" aria-hidden="true">
+          <option value="random">Random</option>
+          <option value="sequential">Sequential</option>
+        </select>
+        <button
+          type="button"
+          id="wallpaper-mode-trigger"
+          class="settings-select"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+        >Random</button>
+        <div id="wallpaper-mode-options" class="settings-select-menu" role="listbox" hidden>
+          <button type="button" class="settings-select-option" role="option" data-value="random">Random</button>
+          <button type="button" class="settings-select-option" role="option" data-value="sequential">Sequential</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <label class="settings-field" for="display-name-input">Your name</label>
       <input
         type="text"
@@ -49,6 +70,15 @@
         maxlength="24"
         autocomplete="off"
       >
+    </div>
+
+    <div class="settings-section">
+      <a
+        class="settings-action"
+        href="https://haowallpaper.com/"
+        target="_blank"
+        rel="noopener noreferrer"
+      >Find New Wallpapers</a>
     </div>
 
   </div>

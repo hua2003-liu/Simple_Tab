@@ -15,6 +15,9 @@ export function getElements() {
     searchEngineSelect: document.getElementById("search-engine-select"),
     searchEngineTrigger: document.getElementById("search-engine-trigger"),
     searchEngineOptions: document.getElementById("search-engine-options"),
+    wallpaperModeSelect: document.getElementById("wallpaper-mode-select"),
+    wallpaperModeTrigger: document.getElementById("wallpaper-mode-trigger"),
+    wallpaperModeOptions: document.getElementById("wallpaper-mode-options"),
     displayNameInput: document.getElementById("display-name-input")
   };
 }

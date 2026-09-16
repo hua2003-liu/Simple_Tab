@@ -34,6 +34,8 @@ export const STORAGE_KEYS = {
   searchHistory: "search_history",
   displayName: "display_name",
   wallpaper: "wallpaper",
+  wallpaperMode: "wallpaper_mode",
+  wallpaperIndex: "wallpaper_index",
   bookmarksVersion: "bookmarks_version"
 };
 

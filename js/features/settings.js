@@ -10,13 +10,22 @@ export async function initSettings({
     searchEngineSelect,
     searchEngineTrigger,
     searchEngineOptions,
+    wallpaperModeSelect,
+    wallpaperModeTrigger,
+    wallpaperModeOptions,
     settingsClose,
     settingsPanel,
     settingsToggle
   } = elements;
   const { closeSettingsPanel, openSettingsPanel } = settingsUi;
-  const storedData = await storageApi.storageGet([STORAGE_KEYS.searchEngine]);
+  const storedData = await storageApi.storageGet([
+    STORAGE_KEYS.searchEngine,
+    STORAGE_KEYS.wallpaperMode
+  ]);
   const currentSearchEngine = storedData[STORAGE_KEYS.searchEngine] || "bing";
+  const currentWallpaperMode = storedData[STORAGE_KEYS.wallpaperMode] === "sequential"
+    ? "sequential"
+    : "random";
   const closePanel = () => {
     closeSettingsPanel(settingsPanel, settingsToggle);
   };
@@ -30,6 +39,15 @@ export async function initSettings({
     currentSearchOption.setAttribute("aria-selected", "true");
   }
   searchPresentationUpdater(currentSearchEngine, elements);
+
+  if (wallpaperModeSelect) {
+    wallpaperModeSelect.value = currentWallpaperMode;
+  }
+  const currentWallpaperModeOption = wallpaperModeOptions?.querySelector(`[data-value="${currentWallpaperMode}"]`);
+  if (currentWallpaperModeOption && wallpaperModeTrigger) {
+    wallpaperModeTrigger.textContent = currentWallpaperModeOption.textContent;
+    currentWallpaperModeOption.setAttribute("aria-selected", "true");
+  }
 
   settingsToggle?.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -75,6 +93,34 @@ export async function initSettings({
     searchPresentationUpdater(nextSearchEngine, elements);
   });
 
+  const closeWallpaperModeOptions = () => {
+    if (!wallpaperModeTrigger || !wallpaperModeOptions) return;
+    wallpaperModeOptions.hidden = true;
+    wallpaperModeTrigger.setAttribute("aria-expanded", "false");
+  };
+
+  wallpaperModeTrigger?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const isOpen = !wallpaperModeOptions?.hidden;
+    if (!wallpaperModeOptions) return;
+    wallpaperModeOptions.hidden = isOpen;
+    wallpaperModeTrigger.setAttribute("aria-expanded", String(!isOpen));
+  });
+
+  wallpaperModeOptions?.addEventListener("click", async (event) => {
+    const option = event.target.closest(".settings-select-option");
+    if (!option || !wallpaperModeSelect) return;
+
+    const nextWallpaperMode = option.dataset.value;
+    wallpaperModeSelect.value = nextWallpaperMode;
+    wallpaperModeTrigger.textContent = option.textContent;
+    wallpaperModeOptions.querySelectorAll(".settings-select-option").forEach((item) => {
+      item.setAttribute("aria-selected", String(item === option));
+    });
+    closeWallpaperModeOptions();
+    await storageApi.storageSet({ [STORAGE_KEYS.wallpaperMode]: nextWallpaperMode });
+  });
+
   document.addEventListener("click", (event) => {
     if (!settingsPanel || !settingsToggle || settingsPanel.hidden) {
       return;
@@ -82,6 +128,7 @@ export async function initSettings({
 
     if (!settingsPanel.contains(event.target) && event.target !== settingsToggle) {
       closeSearchEngineOptions();
+      closeWallpaperModeOptions();
       closePanel();
     }
   });
