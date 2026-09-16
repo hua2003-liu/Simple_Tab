@@ -8,6 +8,7 @@ export function getElements() {
     historyContainer: document.getElementById("search-history"),
     searchEngineTag: document.getElementById("search-engine-tag"),
     bookmarkContainer: document.getElementById("bookmark-list"),
+    wallpaperPinToggle: document.getElementById("wallpaper-pin-toggle"),
     settingsToggle: document.getElementById("settings-toggle"),
     settingsPanel: document.getElementById("settings-panel"),
     settingsClose: document.getElementById("settings-close"),

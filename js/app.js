@@ -56,7 +56,10 @@ async function bootstrap() {
     greetingElement: elements.greeting
   });
 
-  const wallpaperPromise = initWallpaper().catch((error) => {
+  const wallpaperPromise = initWallpaper({
+    storageApi,
+    pinButton: elements.wallpaperPinToggle
+  }).catch((error) => {
     console.warn("Wallpaper loading failed; using the fallback background.", error);
   });
 

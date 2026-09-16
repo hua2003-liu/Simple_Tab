@@ -33,6 +33,7 @@ export const STORAGE_KEYS = {
   searchEngine: "search_engine",
   searchHistory: "search_history",
   displayName: "display_name",
+  wallpaper: "wallpaper",
   bookmarksVersion: "bookmarks_version"
 };
 

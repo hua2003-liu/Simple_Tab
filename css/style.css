@@ -357,6 +357,7 @@ body::after {
   top: 22px;
   right: 22px;
   display: flex;
+  gap: 8px;
   z-index: 30;
   pointer-events: auto;
 }
@@ -382,6 +383,11 @@ body::after {
   background: var(--toolbar-hover-bg);
   border-color: var(--border-strong);
   transform: translateY(-1px);
+}
+
+.toolbar-btn.is-pinned {
+  background: var(--toolbar-hover-bg);
+  border-color: var(--border-strong);
 }
 
 .toolbar-btn:focus-visible,
