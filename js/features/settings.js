@@ -4,17 +4,17 @@ export async function initSettings({
   elements,
   storageApi,
   settingsUi,
-  themeController,
   searchPresentationUpdater
 }) {
   const {
-    themePreviewControls,
     searchEngineSelect,
+    searchEngineTrigger,
+    searchEngineOptions,
     settingsClose,
     settingsPanel,
     settingsToggle
   } = elements;
-  const { closeSettingsPanel, openSettingsPanel, updateThemePreviewControls } = settingsUi;
+  const { closeSettingsPanel, openSettingsPanel } = settingsUi;
   const storedData = await storageApi.storageGet([STORAGE_KEYS.searchEngine]);
   const currentSearchEngine = storedData[STORAGE_KEYS.searchEngine] || "bing";
   const closePanel = () => {
@@ -24,8 +24,12 @@ export async function initSettings({
   if (searchEngineSelect) {
     searchEngineSelect.value = currentSearchEngine;
   }
+  const currentSearchOption = searchEngineOptions?.querySelector(`[data-value="${currentSearchEngine}"]`);
+  if (currentSearchOption && searchEngineTrigger) {
+    searchEngineTrigger.textContent = currentSearchOption.textContent;
+    currentSearchOption.setAttribute("aria-selected", "true");
+  }
   searchPresentationUpdater(currentSearchEngine, elements);
-  updateThemePreviewControls(themeController.getActivePreview(), themePreviewControls);
 
   settingsToggle?.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -42,20 +46,33 @@ export async function initSettings({
     closePanel();
   });
 
-  searchEngineSelect?.addEventListener("change", async () => {
-    await storageApi.storageSet({ [STORAGE_KEYS.searchEngine]: searchEngineSelect.value });
-    searchPresentationUpdater(searchEngineSelect.value, elements);
+  const closeSearchEngineOptions = () => {
+    if (!searchEngineTrigger || !searchEngineOptions) return;
+    searchEngineOptions.hidden = true;
+    searchEngineTrigger.setAttribute("aria-expanded", "false");
+  };
+
+  searchEngineTrigger?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const isOpen = !searchEngineOptions?.hidden;
+    if (!searchEngineOptions) return;
+    searchEngineOptions.hidden = isOpen;
+    searchEngineTrigger.setAttribute("aria-expanded", String(!isOpen));
   });
 
-  themePreviewControls?.addEventListener("click", (event) => {
-    const previewButton = event.target.closest(".theme-preview-btn");
+  searchEngineOptions?.addEventListener("click", async (event) => {
+    const option = event.target.closest(".settings-select-option");
+    if (!option || !searchEngineSelect) return;
 
-    if (!previewButton) {
-      return;
-    }
-
-    themeController.previewTheme(previewButton.dataset.themePreview || "auto");
-    updateThemePreviewControls(themeController.getActivePreview(), themePreviewControls);
+    const nextSearchEngine = option.dataset.value;
+    searchEngineSelect.value = nextSearchEngine;
+    searchEngineTrigger.textContent = option.textContent;
+    searchEngineOptions.querySelectorAll(".settings-select-option").forEach((item) => {
+      item.setAttribute("aria-selected", String(item === option));
+    });
+    closeSearchEngineOptions();
+    await storageApi.storageSet({ [STORAGE_KEYS.searchEngine]: nextSearchEngine });
+    searchPresentationUpdater(nextSearchEngine, elements);
   });
 
   document.addEventListener("click", (event) => {
@@ -64,6 +81,7 @@ export async function initSettings({
     }
 
     if (!settingsPanel.contains(event.target) && event.target !== settingsToggle) {
+      closeSearchEngineOptions();
       closePanel();
     }
   });

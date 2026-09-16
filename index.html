@@ -18,12 +18,26 @@
       <button type="button" id="settings-close" class="settings-close" aria-label="Close settings">Close</button>
     </div>
 
-    <label class="settings-field" for="search-engine-select">Search engine</label>
-    <select id="search-engine-select" class="settings-select">
-      <option value="bing">Bing</option>
-      <option value="google">Google</option>
-      <option value="baidu">Baidu</option>
-    </select>
+    <label class="settings-field" for="search-engine-trigger">Search engine</label>
+    <div class="settings-select-wrap">
+      <select id="search-engine-select" class="settings-select-native" tabindex="-1" aria-hidden="true">
+        <option value="bing">Bing</option>
+        <option value="google">Google</option>
+        <option value="baidu">Baidu</option>
+      </select>
+      <button
+        type="button"
+        id="search-engine-trigger"
+        class="settings-select"
+        aria-haspopup="listbox"
+        aria-expanded="false"
+      >Bing</button>
+      <div id="search-engine-options" class="settings-select-menu" role="listbox" hidden>
+        <button type="button" class="settings-select-option" role="option" data-value="bing">Bing</button>
+        <button type="button" class="settings-select-option" role="option" data-value="google">Google</button>
+        <button type="button" class="settings-select-option" role="option" data-value="baidu">Baidu</button>
+      </div>
+    </div>
 
     <div class="settings-section">
       <label class="settings-field" for="display-name-input">Your name</label>
@@ -37,16 +51,6 @@
       >
     </div>
 
-    <div class="settings-section">
-      <span class="settings-field">Theme test</span>
-      <div id="theme-preview-controls" class="theme-preview-controls">
-        <button type="button" class="theme-preview-btn is-active" data-theme-preview="auto">Auto</button>
-        <button type="button" class="theme-preview-btn" data-theme-preview="morning">Morning</button>
-        <button type="button" class="theme-preview-btn" data-theme-preview="noon">Noon</button>
-        <button type="button" class="theme-preview-btn" data-theme-preview="afternoon">Afternoon</button>
-        <button type="button" class="theme-preview-btn" data-theme-preview="night">Night</button>
-      </div>
-    </div>
   </div>
 
   <div class="main-container">

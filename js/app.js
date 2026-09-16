@@ -19,8 +19,7 @@ import {
 } from "./ui/search-ui.js";
 import {
   closeSettingsPanel,
-  openSettingsPanel,
-  updateThemePreviewControls
+  openSettingsPanel
 } from "./ui/settings-ui.js";
 
 async function bootstrap() {
@@ -40,8 +39,7 @@ async function bootstrap() {
   };
   const settingsUi = {
     closeSettingsPanel,
-    openSettingsPanel,
-    updateThemePreviewControls
+    openSettingsPanel
   };
   const searchHistoryStore = createSearchHistoryStore({
     storageApi,
@@ -95,7 +93,6 @@ async function bootstrap() {
       elements,
       storageApi,
       settingsUi,
-      themeController,
       searchPresentationUpdater: updateSearchPresentation
     })
   ]);
