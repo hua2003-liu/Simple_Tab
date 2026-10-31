@@ -38,3 +38,13 @@ js/
 - Feature modules export `init*` functions that receive dependencies via options object
 - UI modules export pure render/state functions, no side effects on import
 - All async initialization in `bootstrap()` called on DOMContentLoaded
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues (`hua2003-liu/Simple_Tab`), operated via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: root `CONTEXT.md` + `docs/adr/`, created lazily. See `docs/agents/domain.md`.
