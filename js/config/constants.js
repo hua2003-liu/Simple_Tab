@@ -1,5 +1,5 @@
 export const defaultBookmarks = [
-  { title: "Google", url: "https://google.com", icon: "assets/icons/google.png" },
+  { title: "网易云", url: "https://music.163.com", icon: "https://www.google.com/s2/favicons?domain=music.163.com&sz=128" },
   { title: "ChatGPT", url: "https://chatgpt.com", icon: "assets/icons/chatgpt.png" },
   { title: "X", url: "https://x.com", icon: "assets/icons/x.png" },
   { title: "YouTube", url: "https://youtube.com", icon: "assets/icons/youtube.png" },
@@ -26,7 +26,7 @@ export const SEARCH_ENGINES = {
   }
 };
 
-export const BOOKMARKS_VERSION = 9;
+export const BOOKMARKS_VERSION = 10;
 
 export const STORAGE_KEYS = {
   bookmarks: "bookmarks",

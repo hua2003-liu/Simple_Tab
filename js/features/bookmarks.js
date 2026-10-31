@@ -47,6 +47,15 @@ function migrateKnownLocalIcon(bookmark) {
   return localIcon ? { ...bookmark, icon: localIcon } : bookmark;
 }
 
+function migrateDefaultBookmark(bookmark, index, storedVersion) {
+  const isOldDefault = index === 0
+    && storedVersion < BOOKMARKS_VERSION
+    && bookmark?.title === "Google"
+    && /^https?:\/\/(www\.)?google\.com\/?$/.test(bookmark.url || "");
+
+  return isOldDefault ? defaultBookmarks[0] : migrateKnownLocalIcon(bookmark);
+}
+
 export async function initBookmarks({ elements, storageApi, navigationApi, delayMs }) {
   const { bookmarkContainer, mainContainer } = elements;
   const storedData = await storageApi.storageGet([STORAGE_KEYS.bookmarks, STORAGE_KEYS.bookmarksVersion]);
@@ -54,7 +63,9 @@ export async function initBookmarks({ elements, storageApi, navigationApi, delay
   const storedBookmarks = storedData[STORAGE_KEYS.bookmarks];
 
   const needsDefaults = !Array.isArray(storedBookmarks) || storedBookmarks.length === 0;
-  const bookmarks = needsDefaults ? defaultBookmarks : storedBookmarks.map(migrateKnownLocalIcon);
+  const bookmarks = needsDefaults
+    ? defaultBookmarks
+    : storedBookmarks.map((bookmark, index) => migrateDefaultBookmark(bookmark, index, storedVersion));
 
   if (needsDefaults || storedVersion !== BOOKMARKS_VERSION) {
     await storageApi.storageSet({
