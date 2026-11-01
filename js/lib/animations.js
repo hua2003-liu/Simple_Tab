@@ -263,6 +263,23 @@ export function animateBookmarkEnter(items) {
   }
 
   gsap.killTweensOf(motions);
+
+  // 书签多时改为整个卡片区一次入场：单一合成层必然丝滑，
+  // 逐个错开动画在没有常驻合成层的情况下会每块临时建层导致抖动
+  if (items.length > 12) {
+    const container = items[0]?.closest(".bookmark-cards") || items[0]?.parentElement;
+    gsap.set(motions, { autoAlpha: 1, x: 0, y: 0, rotationY: 0, scale: 1 });
+    gsap.set(Array.from(container?.querySelectorAll(".bookmark-icon-wrap, .bookmark-label") || []), { clearProps: "all" });
+    if (container) {
+      gsap.killTweensOf(container);
+      gsap.fromTo(container,
+        { autoAlpha: 0, y: 16 },
+        { autoAlpha: 1, y: 0, duration: duration(0.28), ease: "power2.out", clearProps: "transform" }
+      );
+    }
+    return;
+  }
+
   const timeline = gsap.timeline({ defaults: { overwrite: "auto" } });
 
   items.forEach((item, index) => {
