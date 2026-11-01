@@ -1028,7 +1028,7 @@ button.settings-action {
   gap: 9px;
   width: 100%;
   transform-style: preserve-3d;
-  will-change: transform, opacity;
+  /* 不加 will-change：每个书签卡都静态提升成合成层，几百张卡会把合成器压垮（F5 冻结回归的根源） */
 }
 
 .bookmark-icon-wrap {
@@ -1277,7 +1277,6 @@ body {
 
 .bookmark-item {
   position: relative;
-  will-change: transform, opacity, filter;
   transition: color 0.24s ease;
 }
 
@@ -1299,10 +1298,6 @@ body {
 .bookmark-item:hover::after,
 .bookmark-item:focus-visible::after {
   transform: translateX(-50%) scaleX(1);
-}
-
-.bookmark-icon-wrap {
-  will-change: transform;
 }
 
 .bookmark-item:focus-visible {

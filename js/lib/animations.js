@@ -274,8 +274,8 @@ export function animateBookmarkEnter(items) {
     const at = index * staggerStep;
 
     timeline.fromTo(motion,
-      { autoAlpha: 0, x: offsets[index % offsets.length], y: 34, rotationY: rotations[index % rotations.length] * 1.8, rotationZ: rotations[index % rotations.length] * 0.32, scale: 0.62 },
-      { autoAlpha: 1, x: 0, y: 0, rotationY: 0, rotationZ: 0, scale: 1, duration: duration(0.32), ease: "power4.out" },
+      { autoAlpha: 0, x: offsets[index % offsets.length], y: 34, rotationY: rotations[index % rotations.length] * 1.8, scale: 0.62 },
+      { autoAlpha: 1, x: 0, y: 0, rotationY: 0, scale: 1, duration: duration(0.32), ease: "power4.out" },
       at
     );
 
@@ -288,9 +288,10 @@ export function animateBookmarkEnter(items) {
     }
 
     if (title) {
+      // 不补间 letterSpacing：这是布局属性，几十个标题逐帧重排会拖垮刷新
       timeline.fromTo(title,
-        { autoAlpha: 0, y: 8, letterSpacing: "0.16em" },
-        { autoAlpha: 1, y: 0, letterSpacing: "0em", duration: duration(0.22), ease: "power3.out" },
+        { autoAlpha: 0, y: 8 },
+        { autoAlpha: 1, y: 0, duration: duration(0.22), ease: "power3.out" },
         at + 0.06
       );
     }
