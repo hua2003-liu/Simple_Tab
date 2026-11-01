@@ -14,8 +14,6 @@
     "lint": "eslint js tests",
     "test": "vitest run",
     "test:watch": "vitest",
-    "sync:wallpapers": "node scripts/sync-wallpapers.mjs",
-    "watch:wallpapers": "node scripts/sync-wallpapers.mjs --watch",
     "build:styles": "npx @tailwindcss/cli -i ./css/tailwind.css -o ./css/tailwind.generated.css --minify",
     "watch:styles": "npx @tailwindcss/cli -i ./css/tailwind.css -o ./css/tailwind.generated.css --watch"
   }
