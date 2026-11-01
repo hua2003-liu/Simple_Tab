@@ -21,7 +21,6 @@ if (CustomEase && typeof CustomEase.create === "function") {
 const ease = CustomEase ? "tabSnap" : "power3.out";
 const duration = (normalDuration) => (reducedMotion ? 0 : normalDuration);
 const stagger = (normalStagger) => (reducedMotion ? 0 : normalStagger);
-const canAnimate = Boolean(gsap) && !reducedMotion;
 
 export function createWallpaperStage() {
   const stage = document.createElement("div");

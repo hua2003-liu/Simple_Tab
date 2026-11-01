@@ -24,7 +24,7 @@ function migrateKnownLocalIcon(bookmark) {
     return bookmark;
   }
 
-  let hostname = "";
+  let hostname;
   try {
     hostname = new URL(bookmark.url).hostname;
   } catch {
