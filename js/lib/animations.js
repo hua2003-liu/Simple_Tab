@@ -221,22 +221,23 @@ export function animateBookmarkInteraction(item, active) {
 export function animatePageEnter({ greeting, searchModule, bookmarkModule, toolbar }) {
   if (!gsap) return;
   gsap.set([greeting, searchModule, bookmarkModule, toolbar].filter(Boolean), { transformOrigin: "50% 50%" });
+  // 入场不用 blur：冷启动时全屏模糊栅格化会把首帧拖后几百毫秒，opacity+位移+3D 观感相当
   const tl = gsap.timeline({ defaults: { ease } });
 
   tl.fromTo(greeting,
-    { autoAlpha: 0, y: 42, rotationX: -75, filter: "blur(12px)" },
-    { autoAlpha: 1, y: 0, rotationX: 0, filter: "blur(0px)", duration: duration(0.9) }
+    { autoAlpha: 0, y: 42, rotationX: -75 },
+    { autoAlpha: 1, y: 0, rotationX: 0, duration: duration(0.9) }
   )
     .fromTo(searchModule,
-      { autoAlpha: 0, y: 28, scaleX: 0.84, filter: "blur(12px)" },
-      { autoAlpha: 1, y: 0, scaleX: 1, filter: "blur(0px)", duration: duration(0.9) },
+      { autoAlpha: 0, y: 28, scaleX: 0.84 },
+      { autoAlpha: 1, y: 0, scaleX: 1, duration: duration(0.9) },
       "-=0.55"
     );
 
   if (bookmarkModule) {
     tl.fromTo(bookmarkModule,
-      { autoAlpha: 0, y: 46, rotationX: 35, filter: "blur(10px)" },
-      { autoAlpha: 1, y: 0, rotationX: 0, filter: "blur(0px)", duration: duration(0.82) },
+      { autoAlpha: 0, y: 46, rotationX: 35 },
+      { autoAlpha: 1, y: 0, rotationX: 0, duration: duration(0.82) },
       "-=0.5"
     );
   }
@@ -256,7 +257,8 @@ export function animateBookmarkEnter(items) {
   const motions = items.map((item) => item.querySelector(".bookmark-motion") || item);
 
   if (document.body.classList.contains("app-loading")) {
-    gsap.set(motions, { autoAlpha: 0, y: 30, scale: 0.68, filter: "blur(8px)" });
+    // 入场不用 blur：几十个书签卡同时模糊栅格化会拖垮冷启动首帧
+    gsap.set(motions, { autoAlpha: 0, y: 30, scale: 0.68 });
     return;
   }
 
@@ -272,8 +274,8 @@ export function animateBookmarkEnter(items) {
     const at = index * staggerStep;
 
     timeline.fromTo(motion,
-      { autoAlpha: 0, x: offsets[index % offsets.length], y: 34, rotationY: rotations[index % rotations.length] * 1.8, rotationZ: rotations[index % rotations.length] * 0.32, scale: 0.62, filter: "blur(9px)" },
-      { autoAlpha: 1, x: 0, y: 0, rotationY: 0, rotationZ: 0, scale: 1, filter: "blur(0px)", duration: duration(0.58), ease: "power4.out" },
+      { autoAlpha: 0, x: offsets[index % offsets.length], y: 34, rotationY: rotations[index % rotations.length] * 1.8, rotationZ: rotations[index % rotations.length] * 0.32, scale: 0.62 },
+      { autoAlpha: 1, x: 0, y: 0, rotationY: 0, rotationZ: 0, scale: 1, duration: duration(0.58), ease: "power4.out" },
       at
     );
 

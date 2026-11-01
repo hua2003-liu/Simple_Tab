@@ -5,6 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>New Tab</title>
   <link rel="stylesheet" href="css/style.css">
+  <!-- 模块图逐层 import 发现太慢（冷盘时串行 fetch），HTML 阶段就并行预取全部模块 -->
+  <link rel="modulepreload" href="js/config/constants.js">
+  <link rel="modulepreload" href="js/lib/animations.js">
+  <link rel="modulepreload" href="js/lib/chrome-bookmarks.js">
+  <link rel="modulepreload" href="js/lib/chrome-wallpapers.js">
+  <link rel="modulepreload" href="js/lib/navigation.js">
+  <link rel="modulepreload" href="js/lib/storage.js">
+  <link rel="modulepreload" href="js/ui/elements.js">
+  <link rel="modulepreload" href="js/ui/search-ui.js">
+  <link rel="modulepreload" href="js/ui/settings-ui.js">
+  <link rel="modulepreload" href="js/features/bookmarks.js">
+  <link rel="modulepreload" href="js/features/profile.js">
+  <link rel="modulepreload" href="js/features/search-history-controller.js">
+  <link rel="modulepreload" href="js/features/search-history-store.js">
+  <link rel="modulepreload" href="js/features/search.js">
+  <link rel="modulepreload" href="js/features/settings.js">
+  <link rel="modulepreload" href="js/features/theme.js">
+  <link rel="modulepreload" href="js/features/wallpaper.js">
 </head>
 <body class="app-loading">
   <div class="toolbar">

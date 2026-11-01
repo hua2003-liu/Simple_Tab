@@ -2,6 +2,8 @@ import { STORAGE_KEYS } from "../config/constants.js";
 import { animateWallpaper, createWallpaperStage } from "../lib/animations.js";
 
 const FALLBACK_WALLPAPER = "wallpapers/cover.png";
+// 垫底图宽度：48px 全屏拉伸糊得像「没加载完」，480px 已接近成片，数据量仍在每张几十 KB
+const THUMB_WIDTH = 480;
 
 export function pickRandomWallpaper(list) {
   if (list.length === 0) return null;
@@ -25,17 +27,30 @@ function thumbNameOf(imageUrl) {
   return match ? match[1] : null;
 }
 
-function storeThumb(name, img) {
-  if (!thumbStorageApi || thumbCache[name]) return;
+function isCurrentThumb(entry) {
+  return Boolean(entry) && typeof entry === "object" && entry.width === THUMB_WIDTH && typeof entry.src === "string";
+}
+
+function thumbSrcOf(entry) {
+  if (typeof entry === "string") return entry; // 旧版 48px 缩略图，仍可垫底
+  return isCurrentThumb(entry) ? entry.src : null;
+}
+
+function storeThumb(name, img, bitmap) {
+  if (!thumbStorageApi || isCurrentThumb(thumbCache[name])) return;
   try {
-    const width = 48;
-    const height = Math.max(1, Math.round((img.naturalHeight / img.naturalWidth) * width)) || 27;
+    const ratio = (img.naturalHeight / img.naturalWidth) || 270 / THUMB_WIDTH;
+    const height = Math.max(1, Math.round(ratio * THUMB_WIDTH));
     const canvas = document.createElement("canvas");
-    canvas.width = width;
+    canvas.width = THUMB_WIDTH;
     canvas.height = height;
-    canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-    thumbCache[name] = dataUrl;
+    if (bitmap) {
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, THUMB_WIDTH, height);
+      bitmap.close();
+    } else {
+      canvas.getContext("2d").drawImage(img, 0, 0, THUMB_WIDTH, height);
+    }
+    thumbCache[name] = { src: canvas.toDataURL("image/jpeg", 0.6), width: THUMB_WIDTH };
     void thumbStorageApi.storageSet({ [STORAGE_KEYS.wallpaperThumbs]: thumbCache });
   } catch {
     // 画布失败不影响主流程
@@ -47,19 +62,49 @@ export function applyWallpaper(imageUrl) {
   currentWallpaper = imageUrl;
 
   const name = thumbNameOf(imageUrl);
-  const thumb = name ? thumbCache[name] : null;
-  // 大图立即开始渐进渲染；小图垫底，在大图像素铺满前充当画面
-  const background = thumb
-    ? `url("${imageUrl}"), url("${thumb}")`
-    : `url("${imageUrl}")`;
-  animateWallpaper(wallpaperStage, background);
+  const thumb = name ? thumbSrcOf(thumbCache[name]) : null;
+  performance.mark("wallpaper:bg-set");
 
-  if (name) {
-    // 后台补存缩略图，供下次冷启动垫底
-    const probe = new Image();
-    probe.onload = () => storeThumb(name, probe);
-    probe.src = imageUrl;
+  if (!thumb) {
+    // 无垫底图：先让骨架屏那帧出去，再挂 4K 大图——首个合成帧若带着大图光栅化，会把首绘卡住几百毫秒
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      animateWallpaper(wallpaperStage, `url("${imageUrl}")`);
+    }));
+    return;
   }
+
+  // 先铺小图立刻出画面；大图解码完成后在同一图层无感替换（垫底图当第二层背景兜底）
+  animateWallpaper(wallpaperStage, `url("${thumb}")`);
+
+  const probe = new Image();
+  probe.onload = () => {
+    performance.mark("wallpaper:full-loaded");
+    const swap = () => {
+      const activeLayer = wallpaperStage.layers[wallpaperStage.activeIndex];
+      if (activeLayer && currentWallpaper === imageUrl) {
+        activeLayer.style.backgroundImage = `url("${imageUrl}"), url("${thumb}")`;
+      }
+    };
+    const decoded = probe.decode?.();
+    if (decoded) decoded.then(swap, swap);
+    else swap();
+
+    // 缩略图缓存务必完全避开启动窗口：解码放 worker 线程（createImageBitmap），
+    // 且延迟到首绘/入场动画结束之后，避免挤占首帧的内存带宽
+    setTimeout(() => {
+      const height = Math.max(1, Math.round(((probe.naturalHeight / probe.naturalWidth) || 270 / THUMB_WIDTH) * THUMB_WIDTH));
+      if (typeof createImageBitmap === "function") {
+        createImageBitmap(probe, {
+          resizeWidth: THUMB_WIDTH,
+          resizeHeight: height,
+          resizeQuality: "medium"
+        }).then((bitmap) => storeThumb(name, probe, bitmap), () => storeThumb(name, probe));
+      } else {
+        storeThumb(name, probe);
+      }
+    }, 3500);
+  };
+  probe.src = imageUrl;
 }
 
 function updatePinButton(pinButton, isPinned) {

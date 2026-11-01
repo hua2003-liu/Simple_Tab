@@ -20,3 +20,6 @@ Thumbs.db
 wallpapers
 .claude
 .agents
+
+# 本地实验/测试工具
+.scratch/

@@ -26,8 +26,19 @@ function pinButton() {
 }
 
 async function init(options) {
-  return initWallpaper({ pinButton: pinButton(), ...options });
+  const result = await initWallpaper({ pinButton: pinButton(), ...options });
+  // 无垫底图时上墙走双 rAF（首帧优先），读完 DOM 前先冲两帧
+  await flushFrames();
+  return result;
 }
+
+const flushFrames = () => new Promise((resolve) => {
+  if (typeof requestAnimationFrame === "function") {
+    requestAnimationFrame(() => requestAnimationFrame(resolve));
+  } else {
+    setTimeout(resolve, 0);
+  }
+});
 
 const appliedWallpaper = () => {
   const layers = Array.from(document.querySelectorAll(".wallpaper-stage .wallpaper-layer"));
