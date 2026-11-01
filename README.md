@@ -10,9 +10,9 @@
 
 ### Features
 
-- 🖼️ **35 Built-in Wallpapers** — Anime, landscapes, dark themes, curated aesthetics
+- 🖼️ **Drop-in Wallpapers** — Put images in the `wallpapers/` folder and they appear on the next new tab; random / sequential / pin modes
 - 🔍 **Multi-Engine Search** — Switch between Bing, Google, and Baidu
-- ⭐ **Bookmark Bar** — Quick access to your favorite sites
+- ⭐ **Bookmark Groups** — Mirrors your browser bookmarks bar; organize into groups with drag & drop right on the new tab
 - 🌅 **Time-Based Themes** — Auto adapts UI colors by time of day (morning / noon / afternoon / night)
 - ⚙️ **Customizable** — Your name greeting, search engine preference
 - 🚀 **Lightweight** — Pure vanilla JS, no frameworks, fast load
@@ -36,7 +36,7 @@
 ```bash
 # Place your images in the wallpapers/ folder
 # Supported formats: PNG, JPG, WEBP, GIF
-# Then reload the extension — new wallpapers appear on the next new tab
+# New wallpapers appear on the next new tab — no reload needed
 ```
 
 ### Development
@@ -74,9 +74,9 @@ MIT © 2026 hua2003-liu
 
 ### 功能特点
 
-- 🖼️ **35 张精选壁纸** — 动漫、风景、暗色系、唯美画风
+- 🖼️ **即放即用壁纸** — 图片放进 `wallpapers/` 文件夹，新开标签页即可看到；支持随机 / 顺序 / 固定
 - 🔍 **多搜索引擎** — 切换 Bing、Google、百度
-- ⭐ **书签导航** — 快速访问常用网站
+- ⭐ **书签分组** — 实时镜像浏览器书签栏，可直接在新标签页拖拽整理分组
 - 🌅 **时间主题** — 根据时间段自动变换界面色调
 - ⚙️ **个性化设置** — 定制欢迎语、搜索引擎
 - 🚀 **轻量快速** — 原生 JavaScript，无依赖
@@ -95,7 +95,7 @@ MIT © 2026 hua2003-liu
 ```bash
 # 把图片放入 wallpapers/ 文件夹
 # 支持格式：PNG、JPG、WEBP、GIF
-# 然后重载扩展 —— 新开标签页即可看到新壁纸
+# 新开标签页即可看到新壁纸，无需重载扩展
 ```
 
 ### 开发

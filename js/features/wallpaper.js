@@ -63,7 +63,6 @@ export function applyWallpaper(imageUrl) {
 
   const name = thumbNameOf(imageUrl);
   const thumb = name ? thumbSrcOf(thumbCache[name]) : null;
-  performance.mark("wallpaper:bg-set");
 
   if (!thumb) {
     // 无垫底图：先让骨架屏那帧出去，再挂 4K 大图——首个合成帧若带着大图光栅化，会把首绘卡住几百毫秒
@@ -78,7 +77,6 @@ export function applyWallpaper(imageUrl) {
 
   const probe = new Image();
   probe.onload = () => {
-    performance.mark("wallpaper:full-loaded");
     const swap = () => {
       const activeLayer = wallpaperStage.layers[wallpaperStage.activeIndex];
       if (activeLayer && currentWallpaper === imageUrl) {

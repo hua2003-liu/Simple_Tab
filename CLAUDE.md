@@ -28,7 +28,7 @@ js/
 ├── config/
 │   └── constants.js # Engines, storage keys
 ├── features/        # Feature init functions (bookmarks, search, settings, theme, wallpaper)
-├── lib/             # Shared utilities (storage, navigation)
+├── lib/             # Shared utilities (storage, navigation, animations, chrome adapters)
 └── ui/              # DOM element getters, render functions
 ```
 
@@ -36,6 +36,7 @@ js/
 - **Theme system**: Time-based (morning/noon/afternoon/night) with manual preview override
 - **Storage**: Chrome extension storage API wrapped in promises (`lib/storage.js`)
 - **Wallpaper source**: runtime enumeration of the `wallpapers/` directory via package directory API (`lib/chrome-wallpapers.js`), no prebuilt manifest
+- **Bookmarks**: the new tab mirrors and manages the browser bookmarks bar (read/write via `chrome.bookmarks`, see ADR-0002); the extension stores no bookmark data itself
 
 ## Key Patterns
 
