@@ -83,7 +83,7 @@ export function animateWallpaper(stageState, backgroundImage) {
     y: 0,
     rotation: 0,
     clipPath: "inset(0 0 0 0)",
-    duration: duration(isInitial ? 1.8 : 1.35),
+    duration: duration(isInitial ? 0.7 : 0.5),
     ease: isInitial ? "power3.out" : ease,
     overwrite: "auto"
   });
@@ -93,7 +93,7 @@ export function animateWallpaper(stageState, backgroundImage) {
       autoAlpha: 0,
       scale: 1.06,
       x: -28,
-      duration: duration(1.05),
+      duration: duration(0.5),
       ease: "power2.inOut",
       overwrite: "auto"
     });
@@ -226,12 +226,12 @@ export function animatePageEnter({ greeting, searchModule, bookmarkModule, toolb
 
   tl.fromTo(greeting,
     { autoAlpha: 0, y: 42, rotationX: -75 },
-    { autoAlpha: 1, y: 0, rotationX: 0, duration: duration(0.9) }
+    { autoAlpha: 1, y: 0, rotationX: 0, duration: duration(0.35) }
   )
     .fromTo(searchModule,
       { autoAlpha: 0, y: 28, scaleX: 0.84 },
-      { autoAlpha: 1, y: 0, scaleX: 1, duration: duration(0.9) },
-      "-=0.55"
+      { autoAlpha: 1, y: 0, scaleX: 1, duration: duration(0.35) },
+      "-=0.2"
     );
 
   if (bookmarkModule) {
@@ -244,8 +244,8 @@ export function animatePageEnter({ greeting, searchModule, bookmarkModule, toolb
 
   tl.fromTo(toolbar,
     { autoAlpha: 0, x: 26, rotation: 8 },
-    { autoAlpha: 1, x: 0, rotation: 0, duration: duration(0.56), ease: "back.out(1.6)" },
-    "-=0.72"
+    { autoAlpha: 1, x: 0, rotation: 0, duration: duration(0.3), ease: "back.out(1.6)" },
+    "-=0.25"
   );
 }
 
@@ -269,29 +269,29 @@ export function animateBookmarkEnter(items) {
     const motion = motions[index];
     const icon = item.querySelector(".bookmark-icon-wrap");
     const title = item.querySelector(".bookmark-label");
-    // 书签多时压缩错开间隔，入场总时长封顶约 1.2 秒，避免整页慢慢浮现
-    const staggerStep = Math.min(0.16, 1.2 / Math.max(items.length, 1));
+    // 书签多时压缩错开间隔，入场总时长封顶约 0.45 秒——出现要干脆，不能有「还在加载」感
+    const staggerStep = Math.min(0.16, 0.45 / Math.max(items.length, 1));
     const at = index * staggerStep;
 
     timeline.fromTo(motion,
       { autoAlpha: 0, x: offsets[index % offsets.length], y: 34, rotationY: rotations[index % rotations.length] * 1.8, rotationZ: rotations[index % rotations.length] * 0.32, scale: 0.62 },
-      { autoAlpha: 1, x: 0, y: 0, rotationY: 0, rotationZ: 0, scale: 1, duration: duration(0.58), ease: "power4.out" },
+      { autoAlpha: 1, x: 0, y: 0, rotationY: 0, rotationZ: 0, scale: 1, duration: duration(0.32), ease: "power4.out" },
       at
     );
 
     if (icon) {
       timeline.fromTo(icon,
         { scale: 0.18, rotation: rotations[index % rotations.length] * -2, autoAlpha: 0 },
-        { scale: 1, rotation: 0, autoAlpha: 1, duration: duration(0.42), ease: "power3.out" },
-        at + 0.015
+        { scale: 1, rotation: 0, autoAlpha: 1, duration: duration(0.26), ease: "power3.out" },
+        at + 0.01
       );
     }
 
     if (title) {
       timeline.fromTo(title,
         { autoAlpha: 0, y: 8, letterSpacing: "0.16em" },
-        { autoAlpha: 1, y: 0, letterSpacing: "0em", duration: duration(0.3), ease: "power3.out" },
-        at + 0.1
+        { autoAlpha: 1, y: 0, letterSpacing: "0em", duration: duration(0.22), ease: "power3.out" },
+        at + 0.06
       );
     }
   });
