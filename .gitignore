@@ -18,6 +18,5 @@ dist/
 .DS_Store
 Thumbs.db
 wallpapers
-js/config/wallpapers.json
 .claude
 .agents

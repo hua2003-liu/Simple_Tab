@@ -51,14 +51,14 @@ export function createWallpaperStage() {
   return { activeIndex: -1, layers };
 }
 
-export function animateWallpaper(stageState, imageUrl) {
+export function animateWallpaper(stageState, backgroundImage) {
   if (!stageState) return;
 
   const nextIndex = stageState.activeIndex === 0 ? 1 : 0;
   const nextLayer = stageState.layers[nextIndex];
   const currentLayer = stageState.layers[stageState.activeIndex];
   const isInitial = stageState.activeIndex === -1;
-  nextLayer.style.backgroundImage = `url("${imageUrl}")`;
+  nextLayer.style.backgroundImage = backgroundImage;
 
   if (!gsap) {
     nextLayer.style.opacity = "1";
@@ -218,14 +218,6 @@ export function animateBookmarkInteraction(item, active) {
 }
 
 
-export function animateBookmarkNavigation(button, direction) {
-  if (!button || !gsap || reducedMotion) return;
-  gsap.fromTo(button,
-    { x: direction > 0 ? -8 : 8, scale: 0.72, rotation: direction > 0 ? -12 : 12 },
-    { x: 0, scale: 1, rotation: 0, duration: 0.45, ease: "back.out(2.2)", overwrite: "auto" }
-  );
-}
-
 export function animatePageEnter({ greeting, searchModule, bookmarkModule, toolbar }) {
   if (!gsap) return;
   gsap.set([greeting, searchModule, bookmarkModule, toolbar].filter(Boolean), { transformOrigin: "50% 50%" });
@@ -275,7 +267,9 @@ export function animateBookmarkEnter(items) {
     const motion = motions[index];
     const icon = item.querySelector(".bookmark-icon-wrap");
     const title = item.querySelector(".bookmark-label");
-    const at = index * 0.16;
+    // 书签多时压缩错开间隔，入场总时长封顶约 1.2 秒，避免整页慢慢浮现
+    const staggerStep = Math.min(0.16, 1.2 / Math.max(items.length, 1));
+    const at = index * staggerStep;
 
     timeline.fromTo(motion,
       { autoAlpha: 0, x: offsets[index % offsets.length], y: 34, rotationY: rotations[index % rotations.length] * 1.8, rotationZ: rotations[index % rotations.length] * 0.32, scale: 0.62, filter: "blur(9px)" },
@@ -298,25 +292,6 @@ export function animateBookmarkEnter(items) {
         at + 0.1
       );
     }
-  });
-}
-
-export function animateBookmarkExit(items, direction, onComplete) {
-  if (!gsap || !items?.length) { onComplete?.(); return; }
-  const motions = Array.from(items, (item) => item.querySelector(".bookmark-motion") || item);
-  gsap.to(motions, {
-    autoAlpha: 0,
-    x: direction > 0 ? -56 : 56,
-    y: 12,
-    rotationY: direction > 0 ? -32 : 32,
-    rotationZ: direction > 0 ? -5 : 5,
-    scale: 0.78,
-    filter: "blur(8px)",
-    duration: duration(0.42),
-    stagger: stagger(0.055),
-    ease: "power4.in",
-    overwrite: true,
-    onComplete
   });
 }
 

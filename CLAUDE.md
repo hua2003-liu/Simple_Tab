@@ -9,11 +9,15 @@ Chrome new tab extension with wallpapers, search, and bookmarks. Uses vanilla JS
 ## Commands
 
 ```bash
-# Sync wallpapers directory to constants.js
-npm run sync:wallpapers
+# Lint
+npm run lint
 
-# Watch mode - auto-sync when wallpapers change
-npm run watch:wallpapers
+# Run unit tests
+npm test
+
+# Build/watch Tailwind styles
+npm run build:styles
+npm run watch:styles
 ```
 
 ## Architecture
@@ -22,7 +26,7 @@ npm run watch:wallpapers
 js/
 ├── app.js           # Bootstrap, wires all modules together via DI
 ├── config/
-│   └── constants.js # Wallpapers, bookmarks, engines, storage keys
+│   └── constants.js # Engines, storage keys
 ├── features/        # Feature init functions (bookmarks, search, settings, theme, wallpaper)
 ├── lib/             # Shared utilities (storage, navigation)
 └── ui/              # DOM element getters, render functions
@@ -31,7 +35,7 @@ js/
 - **Bootstrap pattern**: `app.js` creates APIs (storageApi, navigationApi, etc.) and passes them to feature init functions
 - **Theme system**: Time-based (morning/noon/afternoon/night) with manual preview override
 - **Storage**: Chrome extension storage API wrapped in promises (`lib/storage.js`)
-- **Wallpaper sync**: `scripts/sync-wallpapers.mjs` reads `wallpapers/` dir and updates `constants.js`
+- **Wallpaper source**: runtime enumeration of the `wallpapers/` directory via package directory API (`lib/chrome-wallpapers.js`), no prebuilt manifest
 
 ## Key Patterns
 

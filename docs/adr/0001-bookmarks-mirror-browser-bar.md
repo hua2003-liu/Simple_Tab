@@ -1,7 +1,7 @@
 # 书签只读镜像浏览器书签栏
 
 ---
-status: accepted
+status: superseded by ADR-0002
 date: 2026-11-01
 ---
 

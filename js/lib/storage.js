@@ -1,6 +1,15 @@
-import { STORAGE_KEYS, defaultBookmarks, SEARCH_ENGINES } from "../config/constants.js";
+import { STORAGE_KEYS, SEARCH_ENGINES } from "../config/constants.js";
 
 const storage = chrome.storage.local;
+
+// 书签镜像化（ADR-0001）后遗留的旧键，启动时顺手清掉
+const LEGACY_BOOKMARK_KEYS = ["bookmarks", "bookmarks_version"];
+
+function storageRemove(keys) {
+  return new Promise((resolve) => {
+    storage.remove(keys, () => resolve());
+  });
+}
 
 export function storageGet(keys) {
   return new Promise((resolve, reject) => {
@@ -29,17 +38,14 @@ export function storageSet(items) {
 }
 
 export async function ensureInitialData() {
+  void storageRemove(LEGACY_BOOKMARK_KEYS);
+
   const storedData = await storageGet([
-    STORAGE_KEYS.bookmarks,
     STORAGE_KEYS.displayName,
     STORAGE_KEYS.searchEngine,
     STORAGE_KEYS.searchHistory
   ]);
   const updates = {};
-
-  if (!Array.isArray(storedData[STORAGE_KEYS.bookmarks])) {
-    updates[STORAGE_KEYS.bookmarks] = defaultBookmarks;
-  }
 
   if (!Array.isArray(storedData[STORAGE_KEYS.searchHistory])) {
     updates[STORAGE_KEYS.searchHistory] = [];

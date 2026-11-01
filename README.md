@@ -35,13 +35,8 @@
 
 ```bash
 # Place your images in the wallpapers/ folder
-# Supported formats: PNG, JPG, WEBP
-
-# Sync wallpapers to the extension
-npm run sync:wallpapers
-
-# Or watch for changes automatically
-npm run watch:wallpapers
+# Supported formats: PNG, JPG, WEBP, GIF
+# Then reload the extension — new wallpapers appear on the next new tab
 ```
 
 ### Development
@@ -50,11 +45,11 @@ npm run watch:wallpapers
 # Install dependencies
 npm install
 
-# Sync wallpaper changes
-npm run sync:wallpapers
+# Lint
+npm run lint
 
-# Watch wallpaper changes
-npm run watch:wallpapers
+# Run unit tests
+npm test
 ```
 
 ### Project Structure
@@ -63,9 +58,9 @@ npm run watch:wallpapers
 js/
 ├── app.js           # Bootstrap, dependency injection
 ├── config/
-│   └── constants.js # Wallpapers, bookmarks, search engines
+│   └── constants.js # Search engines, storage keys
 ├── features/        # Feature init functions
-├── lib/             # Storage, navigation utilities
+├── lib/             # Storage, navigation, chrome adapters
 └── ui/              # DOM getters, render functions
 ```
 
@@ -99,13 +94,8 @@ MIT © 2026 hua2003-liu
 
 ```bash
 # 把图片放入 wallpapers/ 文件夹
-# 支持格式：PNG、JPG、WEBP
-
-# 同步壁纸到扩展
-npm run sync:wallpapers
-
-# 监听变化自动同步
-npm run watch:wallpapers
+# 支持格式：PNG、JPG、WEBP、GIF
+# 然后重载扩展 —— 新开标签页即可看到新壁纸
 ```
 
 ### 开发
@@ -114,11 +104,11 @@ npm run watch:wallpapers
 # 安装依赖
 npm install
 
-# 同步壁纸
-npm run sync:wallpapers
+# 代码检查
+npm run lint
 
-# 监听壁纸变化
-npm run watch:wallpapers
+# 运行单元测试
+npm test
 ```
 
 ### 项目结构
@@ -127,9 +117,9 @@ npm run watch:wallpapers
 js/
 ├── app.js           # 启动器，依赖注入
 ├── config/
-│   └── constants.js # 壁纸、书签、搜索引擎配置
+│   └── constants.js # 搜索引擎、存储键配置
 ├── features/        # 各功能初始化函数
-├── lib/             # 存储、导航工具
+├── lib/             # 存储、导航、chrome 适配层
 └── ui/              # DOM 获取器、渲染函数
 ```
 
