@@ -252,7 +252,6 @@ export function animatePageEnter({ greeting, searchModule, bookmarkModule, toolb
 export function animateBookmarkEnter(items) {
   if (!gsap || !items?.length) return;
 
-  const rotations = [-12, 8, -7, 11, -9];
   const offsets = [-24, 18, -14, 22, -18];
   const motions = items.map((item) => item.querySelector(".bookmark-motion") || item);
 
@@ -264,12 +263,10 @@ export function animateBookmarkEnter(items) {
 
   gsap.killTweensOf(motions);
 
-  // 书签多时改为整个卡片区一次入场：单一合成层必然丝滑，
-  // 逐个错开动画在没有常驻合成层的情况下会每块临时建层导致抖动
-  if (items.length > 12) {
+  // 超大数量才退到整体入场；常态一律逐个错开（观感活泼）
+  if (items.length > 60) {
     const container = items[0]?.closest(".bookmark-cards") || items[0]?.parentElement;
-    gsap.set(motions, { autoAlpha: 1, x: 0, y: 0, rotationY: 0, scale: 1 });
-    gsap.set(Array.from(container?.querySelectorAll(".bookmark-icon-wrap, .bookmark-label") || []), { clearProps: "all" });
+    gsap.set(motions, { autoAlpha: 1, x: 0, y: 0, scale: 1 });
     if (container) {
       gsap.killTweensOf(container);
       gsap.fromTo(container,
@@ -284,34 +281,13 @@ export function animateBookmarkEnter(items) {
 
   items.forEach((item, index) => {
     const motion = motions[index];
-    const icon = item.querySelector(".bookmark-icon-wrap");
-    const title = item.querySelector(".bookmark-label");
-    // 书签多时压缩错开间隔，入场总时长封顶约 0.45 秒——出现要干脆，不能有「还在加载」感
-    const staggerStep = Math.min(0.16, 0.45 / Math.max(items.length, 1));
-    const at = index * staggerStep;
-
+    // 只补间 motion 外层（图标标题是子节点，跟随移动）：
+    // 不用 3D 翻转、不单独补间图标和标题——节点数与属性成本降到最低，保住丝滑
     timeline.fromTo(motion,
-      { autoAlpha: 0, x: offsets[index % offsets.length], y: 34, rotationY: rotations[index % rotations.length] * 1.8, scale: 0.62 },
-      { autoAlpha: 1, x: 0, y: 0, rotationY: 0, scale: 1, duration: duration(0.32), ease: "power4.out" },
-      at
+      { autoAlpha: 0, x: offsets[index % offsets.length], y: 26, scale: 0.94 },
+      { autoAlpha: 1, x: 0, y: 0, scale: 1, duration: duration(0.3), ease: "power3.out" },
+      index * Math.min(0.05, 0.5 / Math.max(items.length, 1))
     );
-
-    if (icon) {
-      timeline.fromTo(icon,
-        { scale: 0.18, rotation: rotations[index % rotations.length] * -2, autoAlpha: 0 },
-        { scale: 1, rotation: 0, autoAlpha: 1, duration: duration(0.26), ease: "power3.out" },
-        at + 0.01
-      );
-    }
-
-    if (title) {
-      // 不补间 letterSpacing：这是布局属性，几十个标题逐帧重排会拖垮刷新
-      timeline.fromTo(title,
-        { autoAlpha: 0, y: 8 },
-        { autoAlpha: 1, y: 0, duration: duration(0.22), ease: "power3.out" },
-        at + 0.06
-      );
-    }
   });
 }
 
