@@ -37,14 +37,15 @@ export function createWallpaperStage() {
   document.body.prepend(stage);
 
   if (gsap) {
-    const quickX = gsap.quickTo(layers, "x", { duration: 1.1, ease: "power3.out" });
-    const quickY = gsap.quickTo(layers, "y", { duration: 1.1, ease: "power3.out" });
+    // quickTo 逐层创建，确保 x/y 的 resetTo 作用于单一目标。
+    const quickX = layers.map((layer) => gsap.quickTo(layer, "x", { duration: 1.1, ease: "power3.out" }));
+    const quickY = layers.map((layer) => gsap.quickTo(layer, "y", { duration: 1.1, ease: "power3.out" }));
     window.addEventListener("pointermove", (event) => {
       if (reducedMotion) return;
       const x = (event.clientX / window.innerWidth - 0.5) * -14;
       const y = (event.clientY / window.innerHeight - 0.5) * -10;
-      quickX(x);
-      quickY(y);
+      quickX.forEach((update) => update(x));
+      quickY.forEach((update) => update(y));
     }, { passive: true });
   }
 
@@ -73,8 +74,8 @@ export function animateWallpaper(stageState, backgroundImage) {
     scale: isInitial ? 1.18 : 1.12,
     x: isInitial ? 0 : 38,
     y: isInitial ? 0 : 10,
-    rotation: isInitial ? 0 : 0.5,
-    clipPath: isInitial ? "inset(0 0 0 0)" : "inset(0 0 0 100%)"
+    rotation: 0,
+    clipPath: "none"
   });
   gsap.to(nextLayer, {
     autoAlpha: 1,
@@ -82,7 +83,7 @@ export function animateWallpaper(stageState, backgroundImage) {
     x: 0,
     y: 0,
     rotation: 0,
-    clipPath: "inset(0 0 0 0)",
+    clipPath: "none",
     duration: duration(isInitial ? 0.7 : 0.5),
     ease: isInitial ? "power3.out" : ease,
     overwrite: "auto"
@@ -220,73 +221,142 @@ export function animateBookmarkInteraction(item, active) {
 
 export function animatePageEnter({ greeting, searchModule, bookmarkModule, toolbar }) {
   if (!gsap) return;
-  gsap.set([greeting, searchModule, bookmarkModule, toolbar].filter(Boolean), { transformOrigin: "50% 50%" });
-  // 入场不用 blur：冷启动时全屏模糊栅格化会把首帧拖后几百毫秒，opacity+位移+3D 观感相当
-  const tl = gsap.timeline({ defaults: { ease } });
+  // 入场不用 blur：冷启动时全屏模糊栅格化会把首帧拖后几百毫秒。
+  const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
 
   tl.fromTo(greeting,
-    { autoAlpha: 0, y: 42, rotationX: -75 },
-    { autoAlpha: 1, y: 0, rotationX: 0, duration: duration(0.35) }
+    { autoAlpha: 0, y: 16, scale: 0.97 },
+    { autoAlpha: 1, y: 0, scale: 1, duration: duration(0.52) }
   )
     .fromTo(searchModule,
-      { autoAlpha: 0, y: 28, scaleX: 0.84 },
-      { autoAlpha: 1, y: 0, scaleX: 1, duration: duration(0.35) },
-      "-=0.2"
+      { autoAlpha: 0, y: 12, scale: 0.985 },
+      { autoAlpha: 1, y: 0, scale: 1, duration: duration(0.5) },
+      "-=0.34"
     );
 
   if (bookmarkModule) {
     tl.fromTo(bookmarkModule,
-      { autoAlpha: 0, y: 46, rotationX: 35 },
-      { autoAlpha: 1, y: 0, rotationX: 0, duration: duration(0.82) },
-      "-=0.5"
+      { autoAlpha: 0, y: 16, scale: 0.98 },
+      { autoAlpha: 1, y: 0, scale: 1, duration: duration(0.5) },
+      "-=0.32"
     );
   }
 
   tl.fromTo(toolbar,
-    { autoAlpha: 0, x: 26, rotation: 8 },
-    { autoAlpha: 1, x: 0, rotation: 0, duration: duration(0.3), ease: "back.out(1.6)" },
-    "-=0.25"
+    { autoAlpha: 0, y: -10, scale: 0.97 },
+    { autoAlpha: 1, y: 0, scale: 1, duration: duration(0.44) },
+    "-=0.28"
   );
 }
 
-export function animateBookmarkEnter(items) {
-  if (!gsap || !items?.length) return;
+function stableHash(value) {
+  let hash = 0;
+  for (const character of String(value)) hash = (hash * 31 + character.charCodeAt(0)) | 0;
+  return Math.abs(hash);
+}
 
-  const offsets = [-24, 18, -14, 22, -18];
-  const motions = items.map((item) => item.querySelector(".bookmark-motion") || item);
+function bookmarkEntranceState(group, index) {
+  const hash = stableHash(group.dataset.groupId || index);
+  return {
+    x: (hash % 5 - 2) * 2.5,
+    y: 10 + (Math.floor(hash / 5) % 5),
+    rotation: (Math.floor(hash / 25) % 5 - 2) * 0.35,
+    scale: 0.975 + (Math.floor(hash / 125) % 3) * 0.005
+  };
+}
+
+function getBookmarkVisualRanks(groups) {
+  const sorted = groups.map((group) => ({ group, rect: group.getBoundingClientRect() }))
+    .sort((a, b) => Math.abs(a.rect.left - b.rect.left) > 2
+      ? a.rect.left - b.rect.left
+      : a.rect.top - b.rect.top);
+  return new Map(sorted.map(({ group }, index) => [group, index]));
+}
+
+export function animateBookmarkGroups(groups) {
+  if (!gsap || !groups?.length) return;
+
+  if (reducedMotion) {
+    gsap.set(groups, {
+      autoAlpha: 1,
+      x: 0,
+      y: 0,
+      rotation: 0,
+      scale: 1,
+      clearProps: "transform,opacity,visibility"
+    });
+    return;
+  }
+
+  const visualRanks = getBookmarkVisualRanks(groups);
+  const staggerAmount = Math.min(0.28, groups.length * 0.025);
+  const entrance = (property) => (index, target) => bookmarkEntranceState(target, index)[property];
+  const staggerByWaterfallPosition = (_index, target) => {
+    if (groups.length < 2) return 0;
+    return visualRanks.get(target) / (groups.length - 1) * staggerAmount;
+  };
 
   if (document.body.classList.contains("app-loading")) {
-    // 入场不用 blur：几十个书签卡同时模糊栅格化会拖垮冷启动首帧
-    gsap.set(motions, { autoAlpha: 0, y: 30, scale: 0.68 });
+    gsap.set(groups, {
+      autoAlpha: 0,
+      x: entrance("x"),
+      y: entrance("y"),
+      rotation: entrance("rotation"),
+      scale: entrance("scale")
+    });
     return;
   }
 
-  gsap.killTweensOf(motions);
-
-  // 超大数量才退到整体入场；常态一律逐个错开（观感活泼）
-  if (items.length > 60) {
-    const container = items[0]?.closest(".bookmark-cards") || items[0]?.parentElement;
-    gsap.set(motions, { autoAlpha: 1, x: 0, y: 0, scale: 1 });
-    if (container) {
-      gsap.killTweensOf(container);
-      gsap.fromTo(container,
-        { autoAlpha: 0, y: 16 },
-        { autoAlpha: 1, y: 0, duration: duration(0.28), ease: "power2.out", clearProps: "transform" }
-      );
+  gsap.killTweensOf(groups);
+  gsap.fromTo(groups,
+    {
+      autoAlpha: 0,
+      x: entrance("x"),
+      y: entrance("y"),
+      rotation: entrance("rotation"),
+      scale: entrance("scale")
+    },
+    {
+      autoAlpha: 1,
+      x: 0,
+      y: 0,
+      rotation: 0,
+      scale: 1,
+      duration: duration(0.46),
+      stagger: staggerByWaterfallPosition,
+      ease: "power2.out",
+      overwrite: "auto",
+      clearProps: "transform,opacity,visibility"
     }
-    return;
-  }
+  );
+}
 
-  const timeline = gsap.timeline({ defaults: { overwrite: "auto" } });
+export function animateBookmarkLayout(previousRects, groups) {
+  if (!gsap || reducedMotion || !(previousRects instanceof Map) || !groups?.length) return;
 
-  items.forEach((item, index) => {
-    const motion = motions[index];
-    // 只补间 motion 外层（图标标题是子节点，跟随移动）：
-    // 不用 3D 翻转、不单独补间图标和标题——节点数与属性成本降到最低，保住丝滑
-    timeline.fromTo(motion,
-      { autoAlpha: 0, x: offsets[index % offsets.length], y: 26, scale: 0.94 },
-      { autoAlpha: 1, x: 0, y: 0, scale: 1, duration: duration(0.3), ease: "power3.out" },
-      index * Math.min(0.05, 0.5 / Math.max(items.length, 1))
+  const moves = groups.flatMap((group) => {
+    const key = group.dataset.layoutKey;
+    const previous = key ? previousRects.get(key) : null;
+    if (!previous) return [];
+
+    const next = group.getBoundingClientRect();
+    const x = previous.left - next.left;
+    const y = previous.top - next.top;
+    return Math.abs(x) < 1 && Math.abs(y) < 1 ? [] : [{ group, x, y }];
+  });
+
+  moves.forEach(({ group }) => gsap.killTweensOf(group));
+  moves.forEach(({ group, x, y }) => {
+    gsap.fromTo(group,
+      { x, y },
+      {
+        x: 0,
+        y: 0,
+        duration: duration(0.32),
+        ease: "power2.out",
+        overwrite: "auto",
+        clearProps: "transform"
+      }
     );
   });
 }
@@ -347,11 +417,35 @@ export function animateSettingsPanel(settingsPanel, visible) {
 }
 
 export function animatePageLeave(mainContainer, url, delayMs) {
-  if (!mainContainer || !gsap) {
-    setTimeout(() => { window.location.href = url; }, reducedMotion ? 0 : delayMs);
+  if (reducedMotion) {
+    window.location.href = url;
     return;
   }
-  gsap.timeline({ onComplete: () => { window.location.href = url; } })
-    .to(mainContainer, { autoAlpha: 0, y: -30, scale: 0.96, filter: "blur(10px)", duration: duration(0.36), ease: "power4.in" })
-    .to(document.body, { "--page-exit": 1, duration: duration(0.12) }, "-=0.16");
+  if (!mainContainer || !gsap) {
+    setTimeout(() => { window.location.href = url; }, delayMs);
+    return;
+  }
+
+  const toolbar = document.querySelector(".toolbar");
+  const tl = gsap.timeline({ onComplete: () => { window.location.href = url; } });
+  tl.to(mainContainer, {
+    autoAlpha: 0,
+    y: -14,
+    scale: 0.985,
+    rotationX: -1.5,
+    transformOrigin: "50% 0%",
+    duration: duration(0.34),
+    ease: "power2.in",
+    clearProps: "transform,opacity,visibility"
+  });
+  if (toolbar) {
+    tl.to(toolbar, {
+      autoAlpha: 0,
+      y: -8,
+      scale: 0.98,
+      duration: duration(0.24),
+      ease: "power2.in",
+      clearProps: "transform,opacity,visibility"
+    }, "<+=0.08");
+  }
 }

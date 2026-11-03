@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>New Tab</title>
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dialogs.css">
   <!-- 模块图逐层 import 发现太慢（冷盘时串行 fetch），HTML 阶段就并行预取全部模块 -->
   <link rel="modulepreload" href="js/config/constants.js">
   <link rel="modulepreload" href="js/lib/animations.js">
@@ -13,6 +14,8 @@
   <link rel="modulepreload" href="js/lib/navigation.js">
   <link rel="modulepreload" href="js/lib/storage.js">
   <link rel="modulepreload" href="js/ui/elements.js">
+  <link rel="modulepreload" href="js/lib/dialogs.js">
+  <link rel="modulepreload" href="js/lib/search-preference.js">
   <link rel="modulepreload" href="js/ui/search-ui.js">
   <link rel="modulepreload" href="js/ui/settings-ui.js">
   <link rel="modulepreload" href="js/features/bookmarks.js">
@@ -125,7 +128,7 @@
 
     <!-- 蹇嵎涔︾妯″潡 -->
     <div class="bookmark-module">
-      <div id="bookmark-list" class="bookmark-list">
+      <div id="bookmark-list" class="bookmark-list is-loading">
         <div class="bookmark-skeleton" aria-hidden="true">
           <span></span><span></span><span></span><span></span><span></span>
         </div>

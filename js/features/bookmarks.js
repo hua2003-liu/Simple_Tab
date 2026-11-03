@@ -1,100 +1,16 @@
 import {
-  animateBookmarkEnter,
-  animateBookmarkInteraction
+  animateBookmarkGroups,
+  animateBookmarkInteraction,
+  animateBookmarkLayout
 } from "../lib/animations.js";
+import { STORAGE_KEYS } from "../config/constants.js";
+import { createBookmarkActions } from "./bookmark-actions.js";
+import { getBookmarkDropDestination, organizeBookmarkBar, sameOrder } from "./bookmark-rules.js";
+import { createBookmarkDragController } from "./bookmark-drag-controller.js";
 
 const FAVICON_SERVICE = "https://www.google.com/s2/favicons";
 const INBOX_TITLE = "未整理";
 // 全部书签都未分组时不渲染「未整理」标题——单区无需标注，保持页面简洁
-
-const DRAG_BOOKMARK_TYPE = "text/x-bookmark-id";
-const DRAG_GROUP_TYPE = "text/x-group-id";
-
-function createDialogButton(text, onClick, modifier = "") {
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.className = `bookmark-dialog-btn ${modifier}`.trim();
-  btn.textContent = text;
-  btn.addEventListener("click", onClick);
-  return btn;
-}
-
-// 扩展页面禁用 window.prompt，用页内输入对话框代替；返回 Promise<string|null>
-export function createTextDialog() {
-  return (label, initialValue = "") => new Promise((resolve) => {
-    const overlay = document.createElement("div");
-    overlay.className = "bookmark-dialog-overlay";
-
-    const box = document.createElement("div");
-    box.className = "bookmark-dialog";
-
-    const labelEl = document.createElement("div");
-    labelEl.className = "bookmark-dialog-label";
-    labelEl.textContent = label;
-
-    const input = document.createElement("input");
-    input.type = "text";
-    input.className = "bookmark-dialog-input";
-    input.value = initialValue;
-
-    const finish = (value) => {
-      overlay.remove();
-      resolve(value);
-    };
-
-    const buttons = document.createElement("div");
-    buttons.className = "bookmark-dialog-buttons";
-    buttons.appendChild(createDialogButton("取消", () => finish(null)));
-    buttons.appendChild(createDialogButton("确定", () => finish(input.value.trim()), "primary"));
-
-    box.appendChild(labelEl);
-    box.appendChild(input);
-    box.appendChild(buttons);
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-
-    input.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") finish(input.value.trim());
-      if (event.key === "Escape") finish(null);
-    });
-    input.focus();
-    input.select();
-  });
-}
-
-function toBookmark(node) {
-  return { id: node.id, title: node.title, url: node.url };
-}
-
-function byRecencyDesc(a, b) {
-  return (b.dateAdded || 0) - (a.dateAdded || 0);
-}
-
-export function organizeBookmarkBar(barNode) {
-  const children = barNode?.children || [];
-  const isBookmark = (node) => Boolean(node.url);
-  const isFolder = (node) => !node.url && Array.isArray(node.children);
-
-  const inbox = children.filter(isBookmark).sort(byRecencyDesc).map(toBookmark);
-  const groups = [];
-
-  const walk = (nodes) => {
-    nodes.forEach((node, childIndex) => {
-      if (!isFolder(node)) return;
-      groups.push({
-        id: node.id,
-        title: node.title,
-        parentId: node.parentId,
-        childIndex,
-        bookmarks: node.children.filter(isBookmark).sort(byRecencyDesc).map(toBookmark)
-      });
-      walk(node.children);
-    });
-  };
-  walk(children);
-
-  return { barId: barNode?.id || null, inbox, groups };
-}
 
 function getRemoteFavicon(url) {
   // 优先用浏览器自己的 favicon 缓存（需要 manifest 的 favicon 权限），
@@ -154,96 +70,166 @@ function createLetterIcon(bookmark, hostname) {
   return icon;
 }
 
-export function createBookmarkActions({
-  bookmarksApi,
-  refresh,
-  askText = createTextDialog(),
-  confirmDialog = (message) => window.confirm(message)
-}) {
-  return {
-    async createGroup() {
-      const title = (await askText("新分组名称"))?.trim();
-      if (!title) return;
-      const bar = await bookmarksApi.getBookmarksBar();
-      await bookmarksApi.createFolder(title, bar.id);
-      await refresh();
-    },
+function mergeGroupOrder(savedOrder, groups) {
+  const availableIds = new Set(groups.map((group) => group.id));
+  const nextOrder = [];
+  const seen = new Set();
 
-    async renameGroup(group) {
-      const title = (await askText("重命名分组", group.title))?.trim();
-      if (!title || title === group.title) return;
-      await bookmarksApi.rename(group.id, title);
-      await refresh();
-    },
+  if (Array.isArray(savedOrder)) {
+    savedOrder.forEach((id) => {
+      if (typeof id !== "string" || !availableIds.has(id) || seen.has(id)) return;
+      seen.add(id);
+      nextOrder.push(id);
+    });
+  }
 
-    // 保守策略：删除分组前先把组内书签移回该分组所在的上级，避免随树一起消失
-    async deleteGroup(group) {
-      if (!confirmDialog(`删除分组「${group.title}」？组内书签将移回上一层。`)) return;
-      for (const bookmark of group.bookmarks) {
-        await bookmarksApi.move(bookmark.id, { parentId: group.parentId });
-      }
-      await bookmarksApi.removeFolder(group.id);
-      await refresh();
-    },
+  groups.forEach(({ id }) => {
+    if (seen.has(id)) return;
+    seen.add(id);
+    nextOrder.push(id);
+  });
 
-    async addBookmark(section) {
-      const url = await askText("书签 URL");
-      if (!url) return;
-      const title = (await askText("书签名称（留空则用 URL）")) || url;
-      await bookmarksApi.createBookmark({ title, url, parentId: section.parentId });
-      await refresh();
-    },
-
-    async deleteBookmark(bookmark) {
-      if (!confirmDialog(`删除书签「${bookmark.title}」？`)) return;
-      await bookmarksApi.removeBookmark(bookmark.id);
-      await refresh();
-    },
-
-    async moveBookmark(bookmarkId, targetParentId) {
-      await bookmarksApi.move(bookmarkId, { parentId: targetParentId });
-      await refresh();
-    },
-
-    // Chrome 的 move index 以「移除被拖项之后」的 children 计算：
-    // 向前（索引更小处）拖时目标位需要左移一位
-    async moveGroupBefore(group, targetGroup) {
-      if (group.id === targetGroup.id) return;
-      const sameParent = group.parentId === targetGroup.parentId;
-      const targetIndex = sameParent && group.childIndex < targetGroup.childIndex
-        ? targetGroup.childIndex - 1
-        : targetGroup.childIndex;
-      await bookmarksApi.move(group.id, { parentId: targetGroup.parentId, index: targetIndex });
-      await refresh();
-    }
-  };
+  return nextOrder;
 }
 
-export async function initBookmarks({ elements, bookmarksApi, navigationApi, delayMs }) {
+function groupsInOrder(groups, order) {
+  const groupsById = new Map(groups.map((group) => [group.id, group]));
+  return order.map((id) => groupsById.get(id)).filter(Boolean);
+}
+
+export async function initBookmarks({ elements, bookmarksApi, storageApi, navigationApi, dialogs, delayMs, initialLoadTimeoutMs = 5000 }) {
   const { bookmarkContainer, mainContainer } = elements;
 
   if (!bookmarkContainer) return;
 
-  // 最近一次渲染的组织结果，供 drop 处理查找书签所属区与被拖分组
+  const skeleton = bookmarkContainer.querySelector(".bookmark-skeleton");
   let current = null;
-  const findBookmarkParentId = (data, bookmarkId) => {
-    if (data.inbox.some((item) => item.id === bookmarkId)) return data.barId;
-    return data.groups.find((group) => group.bookmarks.some((item) => item.id === bookmarkId))?.id || null;
+  let hasRendered = false;
+  let latestRefreshId = 0;
+  let groupOrder = [];
+  let orderWritePromise = Promise.resolve();
+  const groupOrderReady = (async () => {
+    try {
+      const stored = await storageApi?.storageGet?.([STORAGE_KEYS.bookmarkGroupOrder]);
+      groupOrder = stored?.[STORAGE_KEYS.bookmarkGroupOrder];
+      if (!Array.isArray(groupOrder)) groupOrder = [];
+    } catch (error) {
+      console.warn("Failed to read bookmark group order.", error);
+      groupOrder = [];
+    }
+  })();
+  const persistGroupOrder = (nextOrder) => {
+    groupOrder = [...nextOrder];
+    if (!storageApi?.storageSet) return Promise.resolve();
+
+    const orderToSave = [...groupOrder];
+    orderWritePromise = orderWritePromise
+      .catch(() => {})
+      .then(() => storageApi.storageSet({ [STORAGE_KEYS.bookmarkGroupOrder]: orderToSave }))
+      .catch((error) => console.warn("Failed to save bookmark group order.", error));
+    return orderWritePromise;
+  };
+  let initialLoadTimeoutId = null;
+  let initialLoadResolved = false;
+  let resolveInitialLoad;
+  const initialLoadPromise = new Promise((resolve) => {
+    resolveInitialLoad = resolve;
+  });
+  const finishInitialLoad = (status) => {
+    if (initialLoadResolved) return;
+    initialLoadResolved = true;
+    clearTimeout(initialLoadTimeoutId);
+    bookmarkContainer.classList.remove("is-loading");
+    bookmarkContainer.classList.add("is-ready");
+    resolveInitialLoad(status);
+  };
+  const replaceBookmarkContent = (content) => {
+    bookmarkContainer.replaceChildren(...[skeleton, content].filter(Boolean));
   };
   const findGroup = (data, groupId) => data.groups.find((group) => group.id === groupId) || null;
+  const captureBookmarkLayout = () => {
+    const positions = new Map();
+    bookmarkContainer.querySelectorAll(".bookmark-section[data-layout-key]").forEach((section) => {
+      const rect = section.getBoundingClientRect();
+      positions.set(section.dataset.layoutKey, { left: rect.left, top: rect.top });
+    });
+    return positions;
+  };
+  const getRenderedSections = () => Array.from(bookmarkContainer.querySelectorAll(".bookmark-section"));
+  let dragController;
+  const reorderGroup = (draggedId, targetId) => {
+    const draggedIndex = groupOrder.indexOf(draggedId);
+    const targetIndex = groupOrder.indexOf(targetId);
+    if (draggedIndex < 0 || targetIndex < 0 || draggedIndex === targetIndex) return;
 
-  const refresh = async () => {
-    let barNode;
-    try {
-      barNode = await bookmarksApi.getBookmarksBar();
-    } catch (error) {
-      console.warn("Failed to read the bookmarks bar.", error);
-      barNode = null;
-    }
-    render(organizeBookmarkBar(barNode));
+    const nextOrder = [...groupOrder];
+    [nextOrder[draggedIndex], nextOrder[targetIndex]] = [nextOrder[targetIndex], nextOrder[draggedIndex]];
+
+    const previousPositions = captureBookmarkLayout();
+    const cards = bookmarkContainer.querySelector(".bookmark-cards");
+    if (!cards) return;
+    const sectionsById = new Map(getRenderedSections()
+      .filter((section) => section.dataset.groupId)
+      .map((section) => [section.dataset.groupId, section]));
+
+    groupOrder = nextOrder;
+    nextOrder.forEach((id) => {
+      const section = sectionsById.get(id);
+      if (section) cards.appendChild(section);
+    });
+    animateBookmarkLayout(previousPositions, getRenderedSections());
+    void persistGroupOrder(nextOrder);
   };
 
-  const actions = createBookmarkActions({ bookmarksApi, refresh });
+  const renderLoadError = (message) => {
+    const error = document.createElement("div");
+    error.className = "bookmark-empty bookmark-load-error";
+    error.setAttribute("role", "status");
+    error.setAttribute("aria-live", "polite");
+
+    const text = document.createElement("span");
+    text.textContent = message;
+
+    const retryButton = document.createElement("button");
+    retryButton.type = "button";
+    retryButton.className = "bookmark-retry";
+    retryButton.textContent = "重试";
+    retryButton.addEventListener("click", () => {
+      void refresh();
+    });
+
+    error.append(text, retryButton);
+    replaceBookmarkContent(error);
+  };
+
+  const refresh = async () => {
+    const refreshId = ++latestRefreshId;
+    try {
+      const [barNode] = await Promise.all([
+        bookmarksApi.getBookmarksBar(),
+        groupOrderReady
+      ]);
+      if (refreshId !== latestRefreshId) return "stale";
+      render(organizeBookmarkBar(barNode));
+      finishInitialLoad("loaded");
+      return "loaded";
+    } catch (error) {
+      if (refreshId !== latestRefreshId) return "stale";
+      console.warn("Failed to read the bookmarks bar.", error);
+      if (!hasRendered) {
+        renderLoadError("书签暂时无法加载。");
+        finishInitialLoad("error");
+      }
+      return "error";
+    }
+  };
+
+  const actions = createBookmarkActions({
+    bookmarksApi,
+    refresh,
+    askText: dialogs.askText,
+    confirmDialog: dialogs.confirm
+  });
 
   const createGroupTitle = (title) => {
     const heading = document.createElement("span");
@@ -260,6 +246,7 @@ export async function initBookmarks({ elements, bookmarksApi, navigationApi, del
     btn.title = title;
     btn.setAttribute("aria-label", title);
     btn.addEventListener("click", (event) => {
+      event.preventDefault();
       event.stopPropagation();
       onClick();
     });
@@ -270,6 +257,7 @@ export async function initBookmarks({ elements, bookmarksApi, navigationApi, del
     const link = document.createElement("a");
     link.href = bookmark.url;
     link.className = "bookmark-item";
+    link.dataset.bookmarkId = bookmark.id;
     link.setAttribute("draggable", "true");
 
     const hostname = getHostname(bookmark.url);
@@ -311,10 +299,7 @@ export async function initBookmarks({ elements, bookmarksApi, navigationApi, del
       event.preventDefault();
       navigationApi.navigateWithTransition({ mainContainer, url: bookmark.url, delayMs });
     });
-    link.addEventListener("dragstart", (event) => {
-      event.dataTransfer.setData(DRAG_BOOKMARK_TYPE, bookmark.id);
-      event.dataTransfer.effectAllowed = "move";
-    });
+    dragController.wireBookmark(link, bookmark.id);
     link.addEventListener("mouseenter", () => animateBookmarkInteraction(link, true));
     link.addEventListener("mouseleave", () => animateBookmarkInteraction(link, false));
     link.addEventListener("focusin", () => animateBookmarkInteraction(link, true));
@@ -332,52 +317,54 @@ export async function initBookmarks({ elements, bookmarksApi, navigationApi, del
     });
   };
 
-  const wireDropTarget = (section, { parentId, group }) => {
-    section.addEventListener("dragover", (event) => {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = "move";
-      section.classList.add("drag-over");
-    });
-    section.addEventListener("dragleave", () => {
-      section.classList.remove("drag-over");
-    });
-    section.addEventListener("drop", async (event) => {
-      event.preventDefault();
-      section.classList.remove("drag-over");
-      const bookmarkId = event.dataTransfer.getData(DRAG_BOOKMARK_TYPE);
-      const groupId = event.dataTransfer.getData(DRAG_GROUP_TYPE);
-      if (bookmarkId) {
-        // 拖回原区不做任何事（move 到末尾会无意义地改变顺序）
-        if (current && findBookmarkParentId(current, bookmarkId) === parentId) return;
-        await actions.moveBookmark(bookmarkId, parentId);
-      } else if (groupId && group && current) {
-        const dragged = findGroup(current, groupId);
-        if (!dragged) return;
-        await actions.moveGroupBefore(dragged, group);
-      }
-    });
+  const moveDroppedBookmark = async (bookmarkId, event, parentId, targetItem = null) => {
+    const rect = targetItem?.getBoundingClientRect();
+    const beforeTarget = !rect || event.clientX < rect.left + rect.width / 2;
+    const destination = getBookmarkDropDestination(
+      current,
+      bookmarkId,
+      parentId,
+      targetItem?.dataset.bookmarkId || null,
+      beforeTarget
+    );
+    dragController.stop();
+    if (destination) await actions.moveBookmark(bookmarkId, destination);
   };
+  dragController = createBookmarkDragController({
+    container: bookmarkContainer,
+    requestFrame: window.requestAnimationFrame?.bind(window)
+      || ((callback) => window.setTimeout(callback, 16)),
+    cancelFrame: window.cancelAnimationFrame?.bind(window)
+      || ((frame) => window.clearTimeout(frame)),
+    onBookmarkDrop: (bookmarkId, event, parentId, targetItem) => moveDroppedBookmark(bookmarkId, event, parentId || current.barId, targetItem),
+    onGroupDrop: (draggedId, targetId) => {
+      if (findGroup(current, draggedId) && findGroup(current, targetId)) reorderGroup(draggedId, targetId);
+    }
+  });
 
   const createSection = (title, bookmarks, { parentId, group = null, showHeader = true } = {}) => {
     const section = document.createElement("div");
     section.className = "bookmark-section";
     section.dataset.parentId = parentId || "";
+    section.dataset.layoutKey = group ? group.id : "inbox";
+    if (group) section.dataset.groupId = group.id;
 
     if (showHeader) {
       const header = document.createElement("div");
       header.className = "bookmark-section-header";
-      if (title) header.appendChild(createGroupTitle(title));
+      if (title) {
+        const groupTitle = createGroupTitle(title);
+        if (group) {
+          dragController.wireGroupTitle(groupTitle, group, section);
+        }
+        header.appendChild(groupTitle);
+      }
 
       const headerButtons = document.createElement("span");
       headerButtons.className = "bookmark-header-actions";
       headerButtons.appendChild(createHeaderButton("bookmark-add-bookmark", "＋", "添加书签", () => actions.addBookmark({ parentId })));
 
       if (group) {
-        header.draggable = true;
-        header.addEventListener("dragstart", (event) => {
-          event.dataTransfer.setData(DRAG_GROUP_TYPE, group.id);
-          event.dataTransfer.effectAllowed = "move";
-        });
         headerButtons.appendChild(createHeaderButton("bookmark-group-rename", "✎", "重命名分组", () => actions.renameGroup(group)));
         headerButtons.appendChild(createHeaderButton("bookmark-group-delete", "✕", "删除分组", () => actions.deleteGroup(group)));
       }
@@ -391,19 +378,26 @@ export async function initBookmarks({ elements, bookmarksApi, navigationApi, del
     bookmarks.map(createBookmarkEl).forEach((item) => grid.appendChild(item));
     section.appendChild(grid);
 
-    wireDropTarget(section, { parentId, group });
+    dragController.wireDropTarget(section, { parentId, group });
 
     return section;
   };
 
-  const render = ({ barId, inbox, groups }) => {
-    current = { barId, inbox, groups };
+  const render = ({ barId, inbox, groups, childIdsByParent }) => {
+    const isInitialRender = !hasRendered;
+    const previousPositions = hasRendered ? captureBookmarkLayout() : null;
+    const nextOrder = mergeGroupOrder(groupOrder, groups);
+    if (!sameOrder(groupOrder, nextOrder)) void persistGroupOrder(nextOrder);
+    else groupOrder = nextOrder;
+    current = { barId, inbox, groups, childIdsByParent };
 
     if (inbox.length === 0 && groups.length === 0) {
       const emptyNode = document.createElement("div");
-      emptyNode.className = "bookmark-empty";
+      emptyNode.className = "bookmark-empty bookmark-empty-drop-target";
       emptyNode.textContent = "书签栏的书签会显示在这里，在浏览器中打开书签管理器即可添加";
-      bookmarkContainer.replaceChildren(emptyNode);
+      dragController.wireDropTarget(emptyNode, { parentId: barId, group: null });
+      replaceBookmarkContent(emptyNode);
+      hasRendered = true;
       return;
     }
 
@@ -414,13 +408,17 @@ export async function initBookmarks({ elements, bookmarksApi, navigationApi, del
     if (inbox.length > 0) {
       cards.appendChild(createSection(groups.length > 0 ? INBOX_TITLE : null, inbox, { parentId: barId, showHeader: true }));
     }
-    groups.forEach((group) => {
+    groupsInOrder(groups, groupOrder).forEach((group) => {
       cards.appendChild(createSection(group.title, group.bookmarks, { parentId: group.id, group }));
     });
+    if (inbox.length === 0 && groups.length > 0) dragController.wireInboxBackground(cards, barId);
 
-    bookmarkContainer.replaceChildren(cards);
+    replaceBookmarkContent(cards);
     loadIcons(bookmarkContainer);
-    animateBookmarkEnter(Array.from(bookmarkContainer.querySelectorAll(".bookmark-item")));
+    const sections = Array.from(cards.querySelectorAll(".bookmark-section"));
+    if (isInitialRender) animateBookmarkGroups(sections);
+    else animateBookmarkLayout(previousPositions, sections);
+    hasRendered = true;
   };
 
   // 浏览器变更事件（含我们自己写操作触发的）批量到达时只刷一次
@@ -435,5 +433,11 @@ export async function initBookmarks({ elements, bookmarksApi, navigationApi, del
   // 「新建分组」入口在设置面板里
   elements.bookmarkAddGroup?.addEventListener("click", () => actions.createGroup());
 
-  await refresh();
+  initialLoadTimeoutId = setTimeout(() => {
+    latestRefreshId += 1;
+    renderLoadError("书签加载超时，请重试。");
+    finishInitialLoad("timeout");
+  }, initialLoadTimeoutMs);
+  void refresh();
+  return initialLoadPromise;
 }

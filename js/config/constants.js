@@ -21,7 +21,8 @@ export const STORAGE_KEYS = {
   wallpaperMode: "wallpaper_mode",
   wallpaperIndex: "wallpaper_index",
   wallpaperListCache: "wallpaper_list_cache",
-  wallpaperThumbs: "wallpaper_thumbs"
+  wallpaperThumbs: "wallpaper_thumbs",
+  bookmarkGroupOrder: "bookmark_group_order"
 };
 
 export const NAVIGATION_DELAY_MS = 400;

@@ -4,15 +4,19 @@ import { initProfile } from "./features/profile.js";
 import { createSearchHistoryController } from "./features/search-history-controller.js";
 import { createSearchHistoryStore } from "./features/search-history-store.js";
 import { initSearch } from "./features/search.js";
+import { createSearchPreference } from "./lib/search-preference.js";
 import { initSettings } from "./features/settings.js";
 import { createThemeController } from "./features/theme.js";
 import { initWallpaper } from "./features/wallpaper.js";
+import { runAppLifecycle } from "./app-lifecycle.js";
 import { navigateWithTransition } from "./lib/navigation.js";
 import { createBookmarksApi } from "./lib/chrome-bookmarks.js";
 import { createPackageWallpaperSource } from "./lib/chrome-wallpapers.js";
-import { ensureInitialData, storageGet, storageSet } from "./lib/storage.js";
+import { createStorageApi } from "./lib/storage.js";
+import { ensureInitialData } from "./lib/initial-data.js";
 import { getElements } from "./ui/elements.js";
-import { animateBookmarkEnter, animatePageEnter } from "./lib/animations.js";
+import { createDialogs } from "./lib/dialogs.js";
+import { animateBookmarkGroups, animatePageEnter } from "./lib/animations.js";
 import {
   renderHistoryList,
   setHistoryVisibility,
@@ -24,16 +28,15 @@ import {
   openSettingsPanel
 } from "./ui/settings-ui.js";
 
-async function bootstrap() {
+function bootstrap() {
   const elements = getElements();
-  const storageApi = {
-    storageGet,
-    storageSet
-  };
+  const storageApi = createStorageApi(chrome.storage.local, chrome.runtime);
+  const searchPreference = createSearchPreference({ storageApi });
   const navigationApi = {
     navigateWithTransition
   };
   const bookmarksApi = createBookmarksApi();
+  const dialogs = createDialogs();
   const searchUi = {
     renderHistoryList,
     setHistoryVisibility,
@@ -57,41 +60,40 @@ async function bootstrap() {
     greetingElement: elements.greeting
   });
 
-  // 壁纸初始化不阻塞骨架屏撤除；列表缓存让它几乎瞬时上墙
-  const wallpaperPromise = initWallpaper({
-    storageApi,
-    wallpaperSource: createPackageWallpaperSource(),
-    pinButton: elements.wallpaperPinToggle
-  }).catch((error) => {
-    console.warn("Wallpaper loading failed; using the fallback background.", error);
-  });
-
-  await ensureInitialData();
-  themeController.applyTheme();
-
-  // 书签要读整棵书签树并渲染大量卡片，同样不阻塞加载画面的撤销
-  initBookmarks({
-    elements,
-    bookmarksApi,
-    navigationApi,
-    delayMs: NAVIGATION_DELAY_MS
-  }).catch((error) => {
-    console.warn("Bookmarks init failed.", error);
-  });
-
-  await Promise.all([
-    initProfile({
+  const tasks = {
+    startWallpaper: () => initWallpaper({
+      storageApi,
+      wallpaperSource: createPackageWallpaperSource(),
+      pinButton: elements.wallpaperPinToggle
+    }).catch((error) => {
+      console.warn("Wallpaper loading failed; using the fallback background.", error);
+    }),
+    startBookmarks: () => initBookmarks({
+      elements,
+      bookmarksApi,
+      storageApi,
+      navigationApi,
+      dialogs,
+      delayMs: NAVIGATION_DELAY_MS,
+      initialLoadTimeoutMs: 5000
+    }).catch((error) => {
+      console.warn("Bookmarks init failed.", error);
+      return "error";
+    }),
+    removeLegacyData: () => storageApi.storageRemove(["bookmarks", "bookmarks_version"]),
+    ensureInitialData: () => ensureInitialData({ storageApi }),
+    applyTheme: () => themeController.applyTheme(),
+    startProfile: () => initProfile({
       displayNameInput: elements.displayNameInput,
       storageApi,
       onDisplayNameChange: (displayName) => {
         themeController.updateDisplayName(displayName);
       }
     }),
-    initSearch({
+    startSearch: () => initSearch({
       elements,
-      storageApi,
+      searchPreference,
       navigationApi,
-      searchUi,
       searchHistoryStore,
       searchHistoryController,
       constants: {
@@ -99,31 +101,41 @@ async function bootstrap() {
         navigationDelayMs: NAVIGATION_DELAY_MS
       }
     }),
-    initSettings({
+    startSettings: () => initSettings({
       elements,
       storageApi,
+      searchPreference,
       settingsUi,
       searchPresentationUpdater: updateSearchPresentation
-    })
-  ]);
+    }),
+    animate: () => {
+      animateBookmarkGroups(Array.from(elements.bookmarkContainer?.querySelectorAll(".bookmark-section") || []));
+      animatePageEnter({
+        greeting: elements.greeting,
+        searchModule: elements.searchInput?.closest(".search-module"),
+        // Bookmark items own their entrance timeline; do not animate the outer module.
+        bookmarkModule: null,
+        toolbar: document.querySelector(".toolbar")
+      });
+    }
+  };
 
-  document.body.classList.remove("app-loading");
-  // 书签入场动画在 bootstrap 期间被 app-loading 分支搁置，这里补播
-  animateBookmarkEnter(Array.from(elements.bookmarkContainer?.querySelectorAll(".bookmark-item") || []));
-  animatePageEnter({
-    greeting: elements.greeting,
-    searchModule: elements.searchInput?.closest(".search-module"),
-    // Bookmark items own their entrance timeline; do not animate the outer module.
-    bookmarkModule: null,
-    toolbar: document.querySelector(".toolbar")
+  return runAppLifecycle({
+    tasks,
+    elements: {
+      ...elements,
+      body: document.body
+    },
+    recordError: (message, error) => {
+      if (message === "App bootstrap failed.") {
+        console.error(message, error);
+      } else {
+        console.warn(message, error);
+      }
+    }
   });
-
-  void wallpaperPromise;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  void bootstrap().catch((error) => {
-    console.error("App bootstrap failed.", error);
-    document.body.classList.remove("app-loading");
-  });
+  void bootstrap();
 });
