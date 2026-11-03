@@ -1185,6 +1185,15 @@ button.settings-action {
   opacity: 0.4;
 }
 
+/* Edge paint workaround: hide scrollbars; wheel scrolling remains available. */
+* {
+  scrollbar-width: none !important;
+}
+
+::-webkit-scrollbar {
+  display: none !important;
+}
+
 @media (max-width: 768px) {
   body {
     padding: 32px 16px 24px;
