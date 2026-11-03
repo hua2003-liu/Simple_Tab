@@ -3,6 +3,7 @@ import { STORAGE_KEYS } from "../config/constants.js";
 export async function initSettings({
   elements,
   storageApi,
+  searchPreference,
   settingsUi,
   searchPresentationUpdater
 }) {
@@ -18,11 +19,10 @@ export async function initSettings({
     settingsToggle
   } = elements;
   const { closeSettingsPanel, openSettingsPanel } = settingsUi;
-  const storedData = await storageApi.storageGet([
-    STORAGE_KEYS.searchEngine,
-    STORAGE_KEYS.wallpaperMode
+  const [currentSearchEngine, storedData] = await Promise.all([
+    searchPreference.getCurrent(),
+    storageApi.storageGet([STORAGE_KEYS.wallpaperMode])
   ]);
-  const currentSearchEngine = storedData[STORAGE_KEYS.searchEngine] || "bing";
   const currentWallpaperMode = storedData[STORAGE_KEYS.wallpaperMode] === "sequential"
     ? "sequential"
     : "random";
@@ -83,13 +83,13 @@ export async function initSettings({
     if (!option || !searchEngineSelect) return;
 
     const nextSearchEngine = option.dataset.value;
+    await searchPreference.setCurrent(nextSearchEngine);
     searchEngineSelect.value = nextSearchEngine;
     searchEngineTrigger.textContent = option.textContent;
     searchEngineOptions.querySelectorAll(".settings-select-option").forEach((item) => {
       item.setAttribute("aria-selected", String(item === option));
     });
     closeSearchEngineOptions();
-    await storageApi.storageSet({ [STORAGE_KEYS.searchEngine]: nextSearchEngine });
     searchPresentationUpdater(nextSearchEngine, elements);
   });
 

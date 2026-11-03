@@ -1,55 +1,40 @@
-import { STORAGE_KEYS, defaultBookmarks, SEARCH_ENGINES } from "../config/constants.js";
+export function createStorageApi(storage, runtime) {
+  return {
+    storageGet(keys) {
+      return new Promise((resolve, reject) => {
+        storage.get(keys, (result) => {
+          if (runtime.lastError) {
+            reject(runtime.lastError);
+            return;
+          }
 
-const storage = chrome.storage.local;
+          resolve(result);
+        });
+      });
+    },
+    storageSet(items) {
+      return new Promise((resolve, reject) => {
+        storage.set(items, () => {
+          if (runtime.lastError) {
+            reject(runtime.lastError);
+            return;
+          }
 
-export function storageGet(keys) {
-  return new Promise((resolve, reject) => {
-    storage.get(keys, (result) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-        return;
-      }
+          resolve();
+        });
+      });
+    },
+    storageRemove(keys) {
+      return new Promise((resolve, reject) => {
+        storage.remove(keys, () => {
+          if (runtime.lastError) {
+            reject(runtime.lastError);
+            return;
+          }
 
-      resolve(result);
-    });
-  });
-}
-
-export function storageSet(items) {
-  return new Promise((resolve, reject) => {
-    storage.set(items, () => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-        return;
-      }
-
-      resolve();
-    });
-  });
-}
-
-export async function ensureInitialData() {
-  const storedData = await storageGet([
-    STORAGE_KEYS.bookmarks,
-    STORAGE_KEYS.displayName,
-    STORAGE_KEYS.searchEngine,
-    STORAGE_KEYS.searchHistory
-  ]);
-  const updates = {};
-
-  if (!Array.isArray(storedData[STORAGE_KEYS.bookmarks])) {
-    updates[STORAGE_KEYS.bookmarks] = defaultBookmarks;
-  }
-
-  if (!Array.isArray(storedData[STORAGE_KEYS.searchHistory])) {
-    updates[STORAGE_KEYS.searchHistory] = [];
-  }
-
-  if (!SEARCH_ENGINES[storedData[STORAGE_KEYS.searchEngine]]) {
-    updates[STORAGE_KEYS.searchEngine] = "bing";
-  }
-
-  if (Object.keys(updates).length > 0) {
-    await storageSet(updates);
-  }
+          resolve();
+        });
+      });
+    }
+  };
 }

@@ -1,11 +1,10 @@
-import { SEARCH_ENGINES, STORAGE_KEYS } from "../config/constants.js";
+import { SEARCH_ENGINES } from "../config/constants.js";
 import { animateSearchFocus, animateSearchSubmit } from "../lib/animations.js";
 
 export async function initSearch({
   elements,
-  storageApi,
+  searchPreference,
   navigationApi,
-  searchUi,
   searchHistoryStore,
   searchHistoryController,
   constants
@@ -18,11 +17,6 @@ export async function initSearch({
   const {
     navigationDelayMs
   } = constants;
-  const { storageGet } = storageApi;
-  const { updateSearchPresentation } = searchUi;
-
-  const storedData = await storageGet([STORAGE_KEYS.searchEngine]);
-  updateSearchPresentation(storedData[STORAGE_KEYS.searchEngine], elements);
 
   const renderHistory = async () => {
     const historyItems = await searchHistoryStore.list();
@@ -63,11 +57,8 @@ export async function initSearch({
       return;
     }
 
-    const nextData = await storageGet([STORAGE_KEYS.searchEngine]);
-    const selectedEngine = nextData[STORAGE_KEYS.searchEngine];
-    const searchEngineUrl = SEARCH_ENGINES[selectedEngine]
-      ? SEARCH_ENGINES[selectedEngine].url
-      : SEARCH_ENGINES.bing.url;
+    const selectedEngine = await searchPreference.getCurrent();
+    const searchEngineUrl = SEARCH_ENGINES[selectedEngine].url;
 
     navigationApi.navigateWithTransition({
       mainContainer,

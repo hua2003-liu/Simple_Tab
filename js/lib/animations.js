@@ -21,7 +21,6 @@ if (CustomEase && typeof CustomEase.create === "function") {
 const ease = CustomEase ? "tabSnap" : "power3.out";
 const duration = (normalDuration) => (reducedMotion ? 0 : normalDuration);
 const stagger = (normalStagger) => (reducedMotion ? 0 : normalStagger);
-const canAnimate = Boolean(gsap) && !reducedMotion;
 
 export function createWallpaperStage() {
   const stage = document.createElement("div");
@@ -38,28 +37,29 @@ export function createWallpaperStage() {
   document.body.prepend(stage);
 
   if (gsap) {
-    const quickX = gsap.quickTo(layers, "x", { duration: 1.1, ease: "power3.out" });
-    const quickY = gsap.quickTo(layers, "y", { duration: 1.1, ease: "power3.out" });
+    // quickTo 逐层创建，确保 x/y 的 resetTo 作用于单一目标。
+    const quickX = layers.map((layer) => gsap.quickTo(layer, "x", { duration: 1.1, ease: "power3.out" }));
+    const quickY = layers.map((layer) => gsap.quickTo(layer, "y", { duration: 1.1, ease: "power3.out" }));
     window.addEventListener("pointermove", (event) => {
       if (reducedMotion) return;
       const x = (event.clientX / window.innerWidth - 0.5) * -14;
       const y = (event.clientY / window.innerHeight - 0.5) * -10;
-      quickX(x);
-      quickY(y);
+      quickX.forEach((update) => update(x));
+      quickY.forEach((update) => update(y));
     }, { passive: true });
   }
 
   return { activeIndex: -1, layers };
 }
 
-export function animateWallpaper(stageState, imageUrl) {
+export function animateWallpaper(stageState, backgroundImage) {
   if (!stageState) return;
 
   const nextIndex = stageState.activeIndex === 0 ? 1 : 0;
   const nextLayer = stageState.layers[nextIndex];
   const currentLayer = stageState.layers[stageState.activeIndex];
   const isInitial = stageState.activeIndex === -1;
-  nextLayer.style.backgroundImage = `url("${imageUrl}")`;
+  nextLayer.style.backgroundImage = backgroundImage;
 
   if (!gsap) {
     nextLayer.style.opacity = "1";
@@ -74,8 +74,8 @@ export function animateWallpaper(stageState, imageUrl) {
     scale: isInitial ? 1.18 : 1.12,
     x: isInitial ? 0 : 38,
     y: isInitial ? 0 : 10,
-    rotation: isInitial ? 0 : 0.5,
-    clipPath: isInitial ? "inset(0 0 0 0)" : "inset(0 0 0 100%)"
+    rotation: 0,
+    clipPath: "none"
   });
   gsap.to(nextLayer, {
     autoAlpha: 1,
@@ -83,8 +83,8 @@ export function animateWallpaper(stageState, imageUrl) {
     x: 0,
     y: 0,
     rotation: 0,
-    clipPath: "inset(0 0 0 0)",
-    duration: duration(isInitial ? 1.8 : 1.35),
+    clipPath: "none",
+    duration: duration(isInitial ? 0.7 : 0.5),
     ease: isInitial ? "power3.out" : ease,
     overwrite: "auto"
   });
@@ -94,7 +94,7 @@ export function animateWallpaper(stageState, imageUrl) {
       autoAlpha: 0,
       scale: 1.06,
       x: -28,
-      duration: duration(1.05),
+      duration: duration(0.5),
       ease: "power2.inOut",
       overwrite: "auto"
     });
@@ -219,105 +219,145 @@ export function animateBookmarkInteraction(item, active) {
 }
 
 
-export function animateBookmarkNavigation(button, direction) {
-  if (!button || !gsap || reducedMotion) return;
-  gsap.fromTo(button,
-    { x: direction > 0 ? -8 : 8, scale: 0.72, rotation: direction > 0 ? -12 : 12 },
-    { x: 0, scale: 1, rotation: 0, duration: 0.45, ease: "back.out(2.2)", overwrite: "auto" }
-  );
-}
-
 export function animatePageEnter({ greeting, searchModule, bookmarkModule, toolbar }) {
   if (!gsap) return;
-  gsap.set([greeting, searchModule, bookmarkModule, toolbar].filter(Boolean), { transformOrigin: "50% 50%" });
-  const tl = gsap.timeline({ defaults: { ease } });
+  // 入场不用 blur：冷启动时全屏模糊栅格化会把首帧拖后几百毫秒。
+  const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
 
   tl.fromTo(greeting,
-    { autoAlpha: 0, y: 42, rotationX: -75, filter: "blur(12px)" },
-    { autoAlpha: 1, y: 0, rotationX: 0, filter: "blur(0px)", duration: duration(0.9) }
+    { autoAlpha: 0, y: 16, scale: 0.97 },
+    { autoAlpha: 1, y: 0, scale: 1, duration: duration(0.52) }
   )
     .fromTo(searchModule,
-      { autoAlpha: 0, y: 28, scaleX: 0.84, filter: "blur(12px)" },
-      { autoAlpha: 1, y: 0, scaleX: 1, filter: "blur(0px)", duration: duration(0.9) },
-      "-=0.55"
+      { autoAlpha: 0, y: 12, scale: 0.985 },
+      { autoAlpha: 1, y: 0, scale: 1, duration: duration(0.5) },
+      "-=0.34"
     );
 
   if (bookmarkModule) {
     tl.fromTo(bookmarkModule,
-      { autoAlpha: 0, y: 46, rotationX: 35, filter: "blur(10px)" },
-      { autoAlpha: 1, y: 0, rotationX: 0, filter: "blur(0px)", duration: duration(0.82) },
-      "-=0.5"
+      { autoAlpha: 0, y: 16, scale: 0.98 },
+      { autoAlpha: 1, y: 0, scale: 1, duration: duration(0.5) },
+      "-=0.32"
     );
   }
 
   tl.fromTo(toolbar,
-    { autoAlpha: 0, x: 26, rotation: 8 },
-    { autoAlpha: 1, x: 0, rotation: 0, duration: duration(0.56), ease: "back.out(1.6)" },
-    "-=0.72"
+    { autoAlpha: 0, y: -10, scale: 0.97 },
+    { autoAlpha: 1, y: 0, scale: 1, duration: duration(0.44) },
+    "-=0.28"
   );
 }
 
-export function animateBookmarkEnter(items) {
-  if (!gsap || !items?.length) return;
+function stableHash(value) {
+  let hash = 0;
+  for (const character of String(value)) hash = (hash * 31 + character.charCodeAt(0)) | 0;
+  return Math.abs(hash);
+}
 
-  const rotations = [-12, 8, -7, 11, -9];
-  const offsets = [-24, 18, -14, 22, -18];
-  const motions = items.map((item) => item.querySelector(".bookmark-motion") || item);
+function bookmarkEntranceState(group, index) {
+  const hash = stableHash(group.dataset.groupId || index);
+  return {
+    x: (hash % 5 - 2) * 2.5,
+    y: 10 + (Math.floor(hash / 5) % 5),
+    rotation: (Math.floor(hash / 25) % 5 - 2) * 0.35,
+    scale: 0.975 + (Math.floor(hash / 125) % 3) * 0.005
+  };
+}
 
-  if (document.body.classList.contains("app-loading")) {
-    gsap.set(motions, { autoAlpha: 0, y: 30, scale: 0.68, filter: "blur(8px)" });
+function getBookmarkVisualRanks(groups) {
+  const sorted = groups.map((group) => ({ group, rect: group.getBoundingClientRect() }))
+    .sort((a, b) => Math.abs(a.rect.left - b.rect.left) > 2
+      ? a.rect.left - b.rect.left
+      : a.rect.top - b.rect.top);
+  return new Map(sorted.map(({ group }, index) => [group, index]));
+}
+
+export function animateBookmarkGroups(groups) {
+  if (!gsap || !groups?.length) return;
+
+  if (reducedMotion) {
+    gsap.set(groups, {
+      autoAlpha: 1,
+      x: 0,
+      y: 0,
+      rotation: 0,
+      scale: 1,
+      clearProps: "transform,opacity,visibility"
+    });
     return;
   }
 
-  gsap.killTweensOf(motions);
-  const timeline = gsap.timeline({ defaults: { overwrite: "auto" } });
+  const visualRanks = getBookmarkVisualRanks(groups);
+  const staggerAmount = Math.min(0.28, groups.length * 0.025);
+  const entrance = (property) => (index, target) => bookmarkEntranceState(target, index)[property];
+  const staggerByWaterfallPosition = (_index, target) => {
+    if (groups.length < 2) return 0;
+    return visualRanks.get(target) / (groups.length - 1) * staggerAmount;
+  };
 
-  items.forEach((item, index) => {
-    const motion = motions[index];
-    const icon = item.querySelector(".bookmark-icon-wrap");
-    const title = item.querySelector(".bookmark-label");
-    const at = index * 0.16;
+  if (document.body.classList.contains("app-loading")) {
+    gsap.set(groups, {
+      autoAlpha: 0,
+      x: entrance("x"),
+      y: entrance("y"),
+      rotation: entrance("rotation"),
+      scale: entrance("scale")
+    });
+    return;
+  }
 
-    timeline.fromTo(motion,
-      { autoAlpha: 0, x: offsets[index % offsets.length], y: 34, rotationY: rotations[index % rotations.length] * 1.8, rotationZ: rotations[index % rotations.length] * 0.32, scale: 0.62, filter: "blur(9px)" },
-      { autoAlpha: 1, x: 0, y: 0, rotationY: 0, rotationZ: 0, scale: 1, filter: "blur(0px)", duration: duration(0.58), ease: "power4.out" },
-      at
-    );
-
-    if (icon) {
-      timeline.fromTo(icon,
-        { scale: 0.18, rotation: rotations[index % rotations.length] * -2, autoAlpha: 0 },
-        { scale: 1, rotation: 0, autoAlpha: 1, duration: duration(0.42), ease: "power3.out" },
-        at + 0.015
-      );
+  gsap.killTweensOf(groups);
+  gsap.fromTo(groups,
+    {
+      autoAlpha: 0,
+      x: entrance("x"),
+      y: entrance("y"),
+      rotation: entrance("rotation"),
+      scale: entrance("scale")
+    },
+    {
+      autoAlpha: 1,
+      x: 0,
+      y: 0,
+      rotation: 0,
+      scale: 1,
+      duration: duration(0.46),
+      stagger: staggerByWaterfallPosition,
+      ease: "power2.out",
+      overwrite: "auto",
+      clearProps: "transform,opacity,visibility"
     }
-
-    if (title) {
-      timeline.fromTo(title,
-        { autoAlpha: 0, y: 8, letterSpacing: "0.16em" },
-        { autoAlpha: 1, y: 0, letterSpacing: "0em", duration: duration(0.3), ease: "power3.out" },
-        at + 0.1
-      );
-    }
-  });
+  );
 }
 
-export function animateBookmarkExit(items, direction, onComplete) {
-  if (!gsap || !items?.length) { onComplete?.(); return; }
-  const motions = Array.from(items, (item) => item.querySelector(".bookmark-motion") || item);
-  gsap.to(motions, {
-    autoAlpha: 0,
-    x: direction > 0 ? -56 : 56,
-    y: 12,
-    rotationY: direction > 0 ? -32 : 32,
-    rotationZ: direction > 0 ? -5 : 5,
-    scale: 0.78,
-    filter: "blur(8px)",
-    duration: duration(0.42),
-    stagger: stagger(0.055),
-    ease: "power4.in",
-    overwrite: true,
-    onComplete
+export function animateBookmarkLayout(previousRects, groups) {
+  if (!gsap || reducedMotion || !(previousRects instanceof Map) || !groups?.length) return;
+
+  const moves = groups.flatMap((group) => {
+    const key = group.dataset.layoutKey;
+    const previous = key ? previousRects.get(key) : null;
+    if (!previous) return [];
+
+    const next = group.getBoundingClientRect();
+    const x = previous.left - next.left;
+    const y = previous.top - next.top;
+    return Math.abs(x) < 1 && Math.abs(y) < 1 ? [] : [{ group, x, y }];
+  });
+
+  moves.forEach(({ group }) => gsap.killTweensOf(group));
+  moves.forEach(({ group, x, y }) => {
+    gsap.fromTo(group,
+      { x, y },
+      {
+        x: 0,
+        y: 0,
+        duration: duration(0.32),
+        ease: "power2.out",
+        overwrite: "auto",
+        clearProps: "transform"
+      }
+    );
   });
 }
 
@@ -377,11 +417,35 @@ export function animateSettingsPanel(settingsPanel, visible) {
 }
 
 export function animatePageLeave(mainContainer, url, delayMs) {
-  if (!mainContainer || !gsap) {
-    setTimeout(() => { window.location.href = url; }, reducedMotion ? 0 : delayMs);
+  if (reducedMotion) {
+    window.location.href = url;
     return;
   }
-  gsap.timeline({ onComplete: () => { window.location.href = url; } })
-    .to(mainContainer, { autoAlpha: 0, y: -30, scale: 0.96, filter: "blur(10px)", duration: duration(0.36), ease: "power4.in" })
-    .to(document.body, { "--page-exit": 1, duration: duration(0.12) }, "-=0.16");
+  if (!mainContainer || !gsap) {
+    setTimeout(() => { window.location.href = url; }, delayMs);
+    return;
+  }
+
+  const toolbar = document.querySelector(".toolbar");
+  const tl = gsap.timeline({ onComplete: () => { window.location.href = url; } });
+  tl.to(mainContainer, {
+    autoAlpha: 0,
+    y: -14,
+    scale: 0.985,
+    rotationX: -1.5,
+    transformOrigin: "50% 0%",
+    duration: duration(0.34),
+    ease: "power2.in",
+    clearProps: "transform,opacity,visibility"
+  });
+  if (toolbar) {
+    tl.to(toolbar, {
+      autoAlpha: 0,
+      y: -8,
+      scale: 0.98,
+      duration: duration(0.24),
+      ease: "power2.in",
+      clearProps: "transform,opacity,visibility"
+    }, "<+=0.08");
+  }
 }

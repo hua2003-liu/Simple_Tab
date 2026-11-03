@@ -18,6 +18,8 @@ dist/
 .DS_Store
 Thumbs.db
 wallpapers
-js/config/wallpapers.json
 .claude
 .agents
+
+# 本地实验/测试工具
+.scratch/

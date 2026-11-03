@@ -45,7 +45,7 @@ export function createThemeController({ greetingElement }) {
     }
 
     const themeName = getThemeName();
-    let greeting = "你好";
+    let greeting;
 
     if (themeName === "morning") {
       greeting = "Good morning";
