@@ -1,6 +1,6 @@
 # 🌴 Simple Tab
 
-> A lightweight, beautiful Chrome new tab extension with wallpapers, search, and bookmarks.
+> A lightweight, beautiful Chrome and Edge new tab extension with wallpapers, search, and bookmark management.
 
 [English](#english) · [中文](#中文)
 
@@ -12,7 +12,7 @@
 
 - 🖼️ **Drop-in Wallpapers** — Put images in the `wallpapers/` folder and they appear on the next new tab; random / sequential / pin modes
 - 🔍 **Multi-Engine Search** — Switch between Bing, Google, and Baidu
-- ⭐ **Bookmark Groups** — Mirrors your browser bookmarks bar; organize into groups with drag & drop right on the new tab
+- ⭐ **Bookmark Management** — Manage your browser bookmarks bar from the new tab: add or delete bookmarks, create, rename, or delete groups, move bookmarks with drag & drop, and save group order
 - 🌅 **Time-Based Themes** — Auto adapts UI colors by time of day (morning / noon / afternoon / night)
 - ⚙️ **Customizable** — Your name greeting, search engine preference
 - 🚀 **Lightweight** — Pure vanilla JS, no frameworks, fast load
@@ -25,10 +25,10 @@
 ### Installation
 
 1. Download or clone this repository
-2. Open `chrome://extensions/`
+2. Open `chrome://extensions/` in Chrome or `edge://extensions/` in Edge
 3. Enable **Developer mode** (top right toggle)
 4. Click **Load unpacked**
-5. Select the `D:\Tab` folder
+5. Select the repository folder that contains `manifest.json`
 6. Open a new tab — enjoy! 🎉
 
 ### How to Add/Change Wallpapers
@@ -76,7 +76,7 @@ MIT © 2026 hua2003-liu
 
 - 🖼️ **即放即用壁纸** — 图片放进 `wallpapers/` 文件夹，新开标签页即可看到；支持随机 / 顺序 / 固定
 - 🔍 **多搜索引擎** — 切换 Bing、Google、百度
-- ⭐ **书签分组** — 实时镜像浏览器书签栏，可直接在新标签页拖拽整理分组
+- ⭐ **书签管理** — 在新标签页管理浏览器书签栏：添加或删除书签、新建、重命名或删除分组、拖拽移动书签，并保存分组显示顺序
 - 🌅 **时间主题** — 根据时间段自动变换界面色调
 - ⚙️ **个性化设置** — 定制欢迎语、搜索引擎
 - 🚀 **轻量快速** — 原生 JavaScript，无依赖
@@ -84,10 +84,10 @@ MIT © 2026 hua2003-liu
 ### 安装方式
 
 1. 下载或克隆本仓库
-2. 打开 `chrome://extensions/`
+2. 在 Chrome 打开 `chrome://extensions/`，或在 Edge 打开 `edge://extensions/`
 3. 开启右上角 **开发者模式**
 4. 点击 **加载已解压的扩展程序**
-5. 选择 `D:\Tab` 文件夹
+5. 选择包含 `manifest.json` 的仓库文件夹
 6. 打开新标签页 — 搞定！🎉
 
 ### 更换壁纸
