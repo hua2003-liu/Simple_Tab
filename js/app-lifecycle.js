@@ -1,4 +1,6 @@
-export async function runAppLifecycle({ tasks, elements, recordError }) {
+export async function runAppLifecycle({ tasks, elements, clock, recordError }) {
+  const loadingStartedAt = clock.now();
+
   try {
     const wallpaperPromise = tasks.startWallpaper();
     void tasks.startBookmarks();
@@ -18,6 +20,11 @@ export async function runAppLifecycle({ tasks, elements, recordError }) {
       tasks.startSearch(),
       tasks.startSettings()
     ]);
+
+    const remainingLoadingMs = 200 - (clock.now() - loadingStartedAt);
+    if (remainingLoadingMs > 0) {
+      await clock.wait(remainingLoadingMs);
+    }
 
     elements.body.classList.remove("app-loading");
     tasks.animate();

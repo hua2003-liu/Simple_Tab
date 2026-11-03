@@ -126,6 +126,10 @@ function bootstrap() {
       ...elements,
       body: document.body
     },
+    clock: {
+      now: () => performance.now(),
+      wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+    },
     recordError: (message, error) => {
       if (message === "App bootstrap failed.") {
         console.error(message, error);
