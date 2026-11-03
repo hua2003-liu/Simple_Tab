@@ -94,7 +94,7 @@ describe("app lifecycle", () => {
     expect(harness.events.indexOf("theme")).toBeLessThan(harness.events.indexOf("profile"));
     expect(harness.events.indexOf("settings")).toBeLessThan(harness.events.indexOf("body-ready"));
     expect(harness.clock.wait).toHaveBeenCalledWith(200);
-    expect(harness.events.slice(-4)).toEqual(["bookmarks-unloading", "bookmarks-ready", "body-ready", "animate"]);
+    expect(harness.events.slice(-4)).toEqual(["settings", ["wait", 200], "body-ready", "animate"]);
   });
 
   it("does not wait for cleanup and records its failure", async () => {
