@@ -1064,10 +1064,6 @@ button.settings-action {
   right: 0;
 }
 
-.bookmark-item:hover {
-  background: var(--bookmark-surface-hover);
-}
-
 .bookmark-item-delete {
   position: absolute;
   top: 2px;
@@ -1099,27 +1095,6 @@ button.settings-action {
   align-items: center;
   justify-content: center;
   isolation: isolate;
-}
-
-.bookmark-icon-wrap::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05));
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  clip-path: polygon(50% 0%, 84% 16%, 100% 50%, 84% 84%, 50% 100%, 16% 84%, 0% 50%, 16% 16%);
-  transform: rotate(0deg) scale(0.72);
-  transform-origin: center;
-  opacity: 0;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
-  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.32s ease, border-color 0.32s ease;
-  z-index: 0;
-}
-
-.bookmark-item:hover .bookmark-icon-wrap::before {
-  opacity: 1;
-  border-color: rgba(255, 255, 255, 0.18);
-  transform: rotate(18deg) scale(1);
 }
 
 .bookmark-item img {
@@ -1370,11 +1345,6 @@ body {
 
 .bookmark-item:focus-visible {
   outline: none;
-}
-
-.bookmark-item:focus-visible .bookmark-icon-wrap::before {
-  opacity: 1;
-  border-color: rgba(255, 255, 255, 0.22);
 }
 
 @media (prefers-reduced-motion: reduce) {
