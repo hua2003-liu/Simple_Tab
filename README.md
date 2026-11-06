@@ -4,6 +4,8 @@
 
 [English](README.en.md)
 
+![Simple Tab 新标签页示例](screenshots/new-tab-preview.png)
+
 ## 功能
 
 - **书签管理**：显示浏览器书签栏及其文件夹。可添加、删除、移动书签，以及新建、重命名和删除分组；删除分组会将其中的书签移回上级文件夹。

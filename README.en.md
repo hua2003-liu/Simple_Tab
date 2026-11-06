@@ -4,6 +4,8 @@
 
 [简体中文](README.md)
 
+![Simple Tab new-tab page preview](screenshots/new-tab-preview.png)
+
 ## Features
 
 - **Bookmark management:** View the browser bookmarks bar and its folders. Add, delete, and move bookmarks; create, rename, and delete groups. Deleting a group moves its bookmarks to the parent folder.
